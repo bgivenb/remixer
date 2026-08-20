@@ -1,0 +1,15 @@
+node_modules/
+dist-electron/
+dist-renderer/
+release/
+.venv/
+.pytest_cache/
+__pycache__/
+*.pyc
+*.log
+.DS_Store
+models/
+workspace/
+.test-data/
+.pytest-work-*/
+.pytest-remixer-fix-*/

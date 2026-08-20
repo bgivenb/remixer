@@ -1,0 +1,4 @@
+# Pin the exact reviewed BS-RoFormer inference revision. PyTorch is installed
+# separately from the official CUDA wheel index by scripts/setup-engine.ps1.
+bs-roformer-infer @ git+https://github.com/openmirlab/bs-roformer-infer.git@b0f1386fcced25f559f3e61c9f08a73cd9bddf80
+

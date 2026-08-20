@@ -1,0 +1,75 @@
+{
+  "name": "remixer",
+  "version": "0.1.1",
+  "private": true,
+  "author": "Given",
+  "description": "Local producer workstation for audio analysis and AI stem separation",
+  "type": "module",
+  "main": "dist-electron/main/main.js",
+  "scripts": {
+    "predev": "npm run build:electron",
+    "dev": "concurrently -k \"vite --host 127.0.0.1\" \"tsc -p tsconfig.electron.json --watch --preserveWatchOutput\" \"wait-on tcp:5173 && cross-env VITE_DEV_SERVER_URL=http://127.0.0.1:5173 electron .\"",
+    "build:electron": "tsc -p tsconfig.electron.json",
+    "build:renderer": "vite build",
+    "build": "npm run build:electron && npm run build:renderer",
+    "package": "npm run build && node scripts/package.mjs",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.electron.json --noEmit"
+  },
+  "dependencies": {
+    "@vitejs/plugin-react": "latest",
+    "lucide-react": "latest",
+    "react": "latest",
+    "react-dom": "latest",
+    "wavesurfer.js": "latest"
+  },
+  "devDependencies": {
+    "@types/node": "latest",
+    "@types/react": "latest",
+    "@types/react-dom": "latest",
+    "concurrently": "latest",
+    "cross-env": "latest",
+    "electron": "latest",
+    "electron-builder": "latest",
+    "typescript": "latest",
+    "vite": "latest",
+    "vitest": "latest",
+    "wait-on": "latest"
+  },
+  "build": {
+    "appId": "ai.lumae.remixer",
+    "productName": "Remixer",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist-electron/**/*",
+      "dist-renderer/**/*",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "worker",
+        "to": "worker",
+        "filter": ["**/*", "!**/__pycache__/**", "!**/.pytest_cache/**"]
+      },
+      {
+        "from": "scripts",
+        "to": "scripts",
+        "filter": ["setup-engine.ps1"]
+      }
+    ],
+    "asar": true,
+    "win": {
+      "target": ["nsis"],
+      "artifactName": "${productName}-Setup-${version}-${arch}.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    }
+  }
+}
