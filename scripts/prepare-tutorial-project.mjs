@@ -10,7 +10,7 @@ const output = path.join(projectRoot, 'build-tools', 'Down-So-Bad-Tutorial-Proje
 const defaultSource = path.join(os.homedir(), 'Library', 'Application Support', 'Remixer', 'data', 'tracks', 'Given Peace - Down So Bad (Official Music Video)-JR2zel8dJts')
 const source = path.resolve(process.env.REMIXER_TUTORIAL_SOURCE || defaultSource)
 const fallbackUrl = process.env.REMIXER_TUTORIAL_ARCHIVE_URL || 'https://github.com/bgivenb/remixer/releases/download/v0.1.1/Down-So-Bad-Tutorial-Project.zip'
-const expectedArchiveSha256 = 'b46e071e884d47370fd80b3f21f09b011c4ca266cddbb1a8eeb857042b659ce7'
+const expectedArchiveSha256 = '3a3cfce6224a1e097efb406cb9d4a2eba6f0287b9dc75b8c5f7a7d2b3c3d85ed'
 
 async function exists(file) {
   try { await access(file); return true } catch { return false }
