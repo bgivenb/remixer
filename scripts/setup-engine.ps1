@@ -11,6 +11,9 @@ $workerRoot = [System.IO.Path]::GetFullPath((Join-Path $scriptRoot '..\worker'))
 $installPath = [System.IO.Path]::GetFullPath($InstallRoot)
 $venvPath = Join-Path $installPath '.venv'
 $pythonPath = Join-Path $venvPath 'Scripts\python.exe'
+$appDataPath = Split-Path -Parent $installPath
+$dataPath = Join-Path $appDataPath 'data'
+$modelsPath = Join-Path $appDataPath 'models'
 
 if (-not (Test-Path -LiteralPath $workerRoot -PathType Container)) {
     throw "Worker sources were not found at $workerRoot"
@@ -53,14 +56,24 @@ if ($LASTEXITCODE -ne 0) { throw 'Unable to install BS-RoFormer-Infer.' }
 
 Write-Output 'Verifying the engine and GPU...'
 $previousPythonPath = $env:PYTHONPATH
+$previousDataPath = $env:REMIXER_DATA_DIR
+$previousModelsPath = $env:REMIXER_MODELS_DIR
 try {
     $env:PYTHONPATH = $workerRoot
-    & $pythonPath -c "import json; from remixer_worker.health import health; print(json.dumps(health(), indent=2))"
+    $env:REMIXER_DATA_DIR = $dataPath
+    $env:REMIXER_MODELS_DIR = $modelsPath
+    & $pythonPath -c "import json; from remixer_worker.health import health; result = health(); print(json.dumps(result, indent=2)); raise SystemExit(0 if result['ready'] else 1)"
     if ($LASTEXITCODE -ne 0) { throw 'The installed audio engine did not pass verification.' }
+
+    Write-Output 'Downloading and verifying the core six-stem model (~700 MB)...'
+    & $pythonPath -c "from remixer_worker.separation import prepare_model; prepare_model('full', lambda stage, progress, message: print(message, flush=True))"
+    if ($LASTEXITCODE -ne 0) { throw 'Unable to prepare the core six-stem model.' }
 }
 finally {
     $env:PYTHONPATH = $previousPythonPath
+    $env:REMIXER_DATA_DIR = $previousDataPath
+    $env:REMIXER_MODELS_DIR = $previousModelsPath
 }
 
-Write-Output 'Remixer audio engine is ready.'
+Write-Output 'Remixer audio engine and core model are ready.'
 

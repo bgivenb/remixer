@@ -1,14 +1,17 @@
 # Remixer
 
-Remixer is a local macOS producer workstation for acquiring authorized audio, selecting and previewing waveform regions, detecting musical structure, separating stems on Apple Silicon, and copying Ableton-ready WAV files through the macOS file clipboard.
+Remixer is a local Windows and macOS producer workstation for acquiring authorized audio, selecting and previewing waveform regions, detecting musical structure, separating stems with the computer's native accelerator, and copying Ableton-ready WAV files through the operating system's file clipboard.
 
 ## Download
 
 - [Download Remixer for Apple Silicon (.dmg)](https://github.com/bgivenb/remixer/releases/latest/download/Remixer-0.1.1-arm64.dmg)
 - [Download the portable Mac build (.zip)](https://github.com/bgivenb/remixer/releases/latest/download/Remixer-0.1.1-arm64.zip)
+- [Download Remixer for Windows (.exe)](https://github.com/bgivenb/remixer/releases/latest/download/Remixer-Setup-0.1.1-x64.exe)
 - [View all releases](https://github.com/bgivenb/remixer/releases)
 
 The current Mac build is unsigned. After the first launch attempt, macOS may require **System Settings → Privacy & Security → Open Anyway**. A normal trusted Developer ID signature and notarization requires Apple Developer Program membership; see the distribution note below.
+
+The current Windows installer is also unsigned because no Authenticode certificate was provided. Microsoft Defender SmartScreen may show an unrecognized-app warning; a public trusted Windows release requires an appropriate code-signing certificate.
 
 The entire interface follows the stark editorial visual system of [givenpeace.com](https://www.givenpeace.com/): black and white surfaces, condensed display type, sharp borders, and minimal decoration. The built-in YouTube browser opens on Given Peace's **Down So Bad** official video, lets listeners search YouTube without leaving Remixer, and can send the selected video directly into the existing audio-import workflow. Down So Bad is also the permanent pinned default track: the app installs its bundled base audio on a clean launch, opens it at startup, and never lets ordinary recent-history ordering displace it.
 
@@ -16,22 +19,30 @@ Release packages include the losslessly compressed Down So Bad base track and th
 
 Settings includes a project-audio budget with a 5 GB default and a 500 MB minimum. When usage exceeds the limit, Remixer offloads the oldest inactive project audio while retaining its lightweight history, source reference, thumbnail, BPM, key, selections, and chord map. Opening an offloaded project restores its source; stems can then be regenerated as needed. The active project and bundled tutorial are protected from automatic offloading.
 
-## macOS release
+## Desktop releases
 
-The supported Mac release target is Apple Silicon (`arm64`) on macOS 12 or newer. Build artifacts are written to `release/`:
+The supported targets are Windows 10/11 on x64 with an NVIDIA CUDA GPU and Apple Silicon (`arm64`) on macOS 12 or newer. Build artifacts are written to `release/`:
 
 ```text
+release/Remixer-Setup-0.1.1-x64.exe
 release/Remixer-0.1.1-arm64.dmg
 release/Remixer-0.1.1-arm64.zip
 ```
 
+The completed Windows release checklist and measured results are recorded in [WINDOWS_VALIDATION.md](WINDOWS_VALIDATION.md).
+
 The UI and audio engine are installed separately so model and Python dependencies do not make every UI update enormous:
 
 ```text
-App data: ~/Library/Application Support/Remixer
-Engine:   ~/Library/Application Support/Remixer/engine
-Models:   ~/Library/Application Support/Remixer/models
-Tracks:   ~/Library/Application Support/Remixer/data/tracks
+Windows app:    %LOCALAPPDATA%\Programs\Remixer
+Windows engine: %LOCALAPPDATA%\Remixer\engine
+Windows models: %LOCALAPPDATA%\Remixer\models
+Windows tracks: %LOCALAPPDATA%\Remixer\data\tracks
+
+Mac app data:   ~/Library/Application Support/Remixer
+Mac engine:     ~/Library/Application Support/Remixer/engine
+Mac models:     ~/Library/Application Support/Remixer/models
+Mac tracks:     ~/Library/Application Support/Remixer/data/tracks
 ```
 
 The local development build is unsigned. A distributable release still needs the owner's Developer ID signing identity, hardened-runtime entitlements, notarization, and stapling.
@@ -50,9 +61,13 @@ Approximate Apple Silicon footprint after first setup:
 
 With both models and the expanded base tutorial installed, the fixed baseline is roughly 2.2 GB before user projects. The 5 GB storage preference applies only to growing project audio, not the shared engine or model cache.
 
+The verified Windows footprint is approximately 4.5 GB for the private CUDA engine, 667 MB for the core six-stem model, 255 MB for the optional HQ-vocal model, and 61 MB for the expanded tutorial. Allow about 5.2 GB for first setup or 5.5 GB with both models. The same 5 GB preference applies only to project audio.
+
 ## First launch
 
-Remixer currently expects Homebrew `uv` and FFmpeg on the Mac. Install them once:
+On Windows, install `uv`, FFmpeg, and FFprobe on `PATH`, then open Remixer and select **Install audio engine**. The setup creates a private Python 3.11 environment, installs CUDA-enabled PyTorch, verifies the RTX/NVIDIA device, and downloads the core six-stem checkpoint. The optional HQ-vocal model is downloaded on first use.
+
+On macOS, install Homebrew `uv` and FFmpeg once:
 
 ```bash
 brew install uv ffmpeg
@@ -68,7 +83,7 @@ Open Remixer and select **Install audio engine**. The app finds Homebrew tools e
 4. Choose **Six stems** or **HQ vocals**.
 5. Preview the resulting stems.
 6. Use **Full**, **Selection**, **Copy all full**, or **Copy all selection**.
-7. Paste one or more file items into Finder, then drag or import them into Ableton Live as needed. **Files** remains the reliable fallback for Live views that do not accept a direct paste.
+7. Paste one or more file items into Explorer or Finder, then drag or import them into Ableton Live as needed. **Files** remains the reliable fallback for Live views that do not accept a direct paste.
 
 Selections are rendered sample-accurately as 32-bit float WAV files. Stems are never normalized independently, so their relative balance and alignment are preserved.
 
@@ -77,6 +92,7 @@ Selections are rendered sample-accurately as 32-bit float WAV files. Stems are n
 - **Six stems:** `roformer-model-bs-roformer-sw-by-jarredou` / BS-RoFormer SW Fixed
 - **HQ vocals:** `roformer-model-bs-roformer-leap-xe-vocals-by-pcunwa` / Leap XE
 - **Engine:** `bs-roformer-infer` pinned to commit `b0f1386fcced25f559f3e61c9f08a73cd9bddf80`
+- **Windows compute order:** Torch CUDA, then Torch CPU
 - **Mac compute order:** native MLX, Torch MPS, then Torch CPU
 
 The Apple Silicon engine pins Torch 2.11.0, MLX 0.31.0, and mlx-spectro 0.7.0. Both named models have been exercised through MLX with exact input/output frame-count validation. Leap XE keeps the STFT-hop chunk alignment fix (`881559 -> 881152`).
@@ -93,6 +109,21 @@ The official `youtube-nocookie.com` embed is used for playback, while search met
 
 ## Development
 
+Windows:
+
+```powershell
+npm ci
+powershell -ExecutionPolicy Bypass -File .\scripts\setup-engine.ps1
+npm run build:tutorial
+npm run typecheck
+npm test
+$env:PYTHONPATH = (Resolve-Path .\worker).Path
+& "$env:LOCALAPPDATA\Remixer\engine\.venv\Scripts\python.exe" -m pytest .\worker\tests -q
+npm run dev
+```
+
+macOS:
+
 ```bash
 brew install uv ffmpeg
 npm ci
@@ -105,7 +136,7 @@ PYTHONPATH="$PWD/worker" "$HOME/Library/Application Support/Remixer/engine/.venv
 npm run dev
 ```
 
-Build and package the unsigned Apple Silicon release:
+Build and package the native release for the current host (NSIS on Windows, unsigned DMG/ZIP on macOS):
 
 ```bash
 npm run package

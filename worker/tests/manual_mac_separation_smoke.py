@@ -1,4 +1,4 @@
-"""Run both production models on a short exact-length Apple Silicon input."""
+"""Run both production models on a short exact-length input for release validation."""
 
 from __future__ import annotations
 
@@ -28,8 +28,8 @@ def main() -> None:
         )
     )
 
-    with tempfile.TemporaryDirectory(prefix="remixer-mac-smoke-") as temporary:
-        source = Path(temporary) / "Mac smoke – 夜.wav"
+    with tempfile.TemporaryDirectory(prefix="remixer-separation-smoke-") as temporary:
+        source = Path(temporary) / "Remixer smoke – 夜.wav"
         sf.write(source, audio, sample_rate, subtype="FLOAT")
         track = import_local(str(source), report)
         expected_frames = sf.info(track["working_path"]).frames

@@ -1,5 +1,6 @@
 import { spawn } from 'node:child_process'
-import { copyFile, mkdir, mkdtemp, readdir, rm } from 'node:fs/promises'
+import { createHash } from 'node:crypto'
+import { copyFile, mkdir, mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
 
@@ -21,6 +22,22 @@ function run(command, args) {
       else reject(new Error(`${command} exited with code ${code}.`))
     })
   })
+}
+
+async function sha256(file) {
+  return createHash('sha256').update(await readFile(file)).digest('hex')
+}
+
+async function writeChecksums() {
+  const artifacts = (await readdir(destination))
+    .filter((artifact) => /^(?:Remixer.+\.(?:exe|dmg|zip)|Down-So-Bad-Tutorial-Project\.zip)$/i.test(artifact))
+    .sort((left, right) => left.localeCompare(right))
+  const lines = []
+  for (const artifact of artifacts) {
+    lines.push(`${await sha256(path.join(destination, artifact))}  ${artifact}`)
+  }
+  await writeFile(path.join(destination, 'SHA256SUMS.txt'), `${lines.join('\n')}\n`, 'utf8')
+  console.log(`Wrote release checksums for ${artifacts.length} artifacts.`)
 }
 
 try {
@@ -46,6 +63,7 @@ try {
   const tutorialAsset = 'Down-So-Bad-Tutorial-Project.zip'
   await copyFile(path.join(projectRoot, 'build-tools', tutorialAsset), path.join(destination, tutorialAsset))
   console.log(`Copied release artifact: ${tutorialAsset}`)
+  await writeChecksums()
 } finally {
   await rm(temporaryRoot, { recursive: true, force: true })
 }

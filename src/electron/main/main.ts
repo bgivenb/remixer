@@ -17,8 +17,8 @@ protocol.registerSchemesAsPrivileged([
 ])
 
 const projectRoot = app.isPackaged ? path.dirname(process.execPath) : process.cwd()
-const appDataRoot = process.platform === 'win32'
-  ? path.join(process.env.LOCALAPPDATA || app.getPath('userData'), 'Remixer')
+const appDataRoot = process.platform === 'win32' && process.env.LOCALAPPDATA
+  ? path.join(process.env.LOCALAPPDATA, 'Remixer')
   : app.getPath('userData')
 const moduleDir = path.dirname(fileURLToPath(import.meta.url))
 const logFile = path.join(appDataRoot, 'remixer.log')
@@ -64,6 +64,7 @@ function createWindow(): void {
     backgroundColor: '#090b10',
     title: 'Remixer',
     show: false,
+    autoHideMenuBar: process.platform === 'win32',
     webPreferences: {
       preload: path.join(moduleDir, '../preload.js'),
       contextIsolation: true,

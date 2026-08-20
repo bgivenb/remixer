@@ -12,5 +12,7 @@ __pycache__/
 models/
 workspace/
 .test-data/
+.test-runtime/
+.pytest-windows-*/
 .pytest-work-*/
 .pytest-remixer-fix-*/

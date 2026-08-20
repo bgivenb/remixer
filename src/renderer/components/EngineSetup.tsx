@@ -10,6 +10,7 @@ interface EngineSetupProps {
 
 export function EngineSetup({ status, installing, installLog, onInstall }: EngineSetupProps) {
   const isMac = status?.platform === 'darwin' || navigator.platform.startsWith('Mac')
+  const setupFootprint = isMac ? 'about 1.6 GB' : 'about 5.2 GB of disk space'
   return (
     <main className="setup-shell">
       <section className="setup-card panel">
@@ -17,7 +18,7 @@ export function EngineSetup({ status, installing, installLog, onInstall }: Engin
         <p className="eyebrow">One-time setup</p>
         <h1>Install the local audio engine</h1>
         <p className="setup-copy">
-          Remixer installs its private Python, {isMac ? 'Apple Silicon compute' : 'CUDA'}, audio tools, and the core six-stem model. This one-time download is about 1.6 GB. The optional HQ-vocal model downloads only if you choose it later.
+          Remixer installs its private Python, {isMac ? 'Apple Silicon compute' : 'CUDA'}, audio tools, and the core six-stem model. This one-time setup uses {setupFootprint}. The optional HQ-vocal model downloads only if you choose it later.
         </p>
         <div className="setup-specs">
           <span><Cpu size={16} /> {isMac ? 'Native MLX with MPS fallback' : 'NVIDIA GPU acceleration'}</span>
