@@ -1,5 +1,6 @@
 import { spawn } from 'node:child_process'
 import { access, copyFile, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
+import { createHash } from 'node:crypto'
 import os from 'node:os'
 import path from 'node:path'
 
@@ -8,6 +9,8 @@ const projectRoot = path.resolve(import.meta.dirname, '..')
 const output = path.join(projectRoot, 'build-tools', 'Down-So-Bad-Tutorial-Project.zip')
 const defaultSource = path.join(os.homedir(), 'Library', 'Application Support', 'Remixer', 'data', 'tracks', 'Given Peace - Down So Bad (Official Music Video)-JR2zel8dJts')
 const source = path.resolve(process.env.REMIXER_TUTORIAL_SOURCE || defaultSource)
+const fallbackUrl = process.env.REMIXER_TUTORIAL_ARCHIVE_URL || 'https://github.com/bgivenb/remixer/releases/download/v0.1.1/Down-So-Bad-Tutorial-Project.zip'
+const expectedArchiveSha256 = 'b46e071e884d47370fd80b3f21f09b011c4ca266cddbb1a8eeb857042b659ce7'
 
 async function exists(file) {
   try { await access(file); return true } catch { return false }
@@ -33,7 +36,16 @@ if (!await exists(path.join(source, 'track.json'))) {
     console.log(`Using existing tutorial archive: ${output}`)
     process.exit(0)
   }
-  throw new Error(`The processed tutorial source was not found at ${source}. Set REMIXER_TUTORIAL_SOURCE or place the prepared archive at ${output}.`)
+  console.log(`Downloading the verified tutorial base asset from ${fallbackUrl}`)
+  const response = await fetch(fallbackUrl)
+  if (!response.ok) throw new Error(`Tutorial asset download failed with HTTP ${response.status}. Set REMIXER_TUTORIAL_SOURCE or REMIXER_TUTORIAL_ARCHIVE_URL to override it.`)
+  const archive = Buffer.from(await response.arrayBuffer())
+  const actualSha256 = createHash('sha256').update(archive).digest('hex')
+  if (actualSha256 !== expectedArchiveSha256) throw new Error(`Tutorial archive checksum mismatch: expected ${expectedArchiveSha256}, received ${actualSha256}`)
+  await mkdir(path.dirname(output), { recursive: true })
+  await writeFile(output, archive)
+  console.log(`Downloaded verified tutorial project: ${output}`)
+  process.exit(0)
 }
 
 const temporaryRoot = await mkdtemp(path.join(os.tmpdir(), 'remixer-tutorial-'))

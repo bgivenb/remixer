@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from remixer_worker import storage
+from remixer_worker import storage, tracks
 
 
 def _project(root: Path, name: str, *, tutorial: bool = False) -> Path:
@@ -52,3 +52,23 @@ def test_storage_limit_has_500_mb_floor(tmp_path: Path, monkeypatch: pytest.Monk
     monkeypatch.setenv("REMIXER_DATA_DIR", str(tmp_path))
     with pytest.raises(ValueError, match="at least 500 MB"):
         storage.set_storage_limit(499, lambda *_: None)
+
+
+def test_offloaded_url_restores_audio_without_losing_analysis(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("REMIXER_DATA_DIR", str(tmp_path))
+    track_dir = _project(tmp_path, "restorable")
+    storage.offload_project(str(track_dir))
+
+    def fake_download(_url: str, _report):
+        manifest = json.loads((track_dir / "track.json").read_text(encoding="utf-8"))
+        working = track_dir / "working.wav"
+        working.write_bytes(b"restored audio")
+        return {**manifest, "working_path": str(working), "track_dir": str(track_dir)}
+
+    monkeypatch.setattr(tracks, "download_url", fake_download)
+    restored = tracks.restore_track(str(track_dir), lambda *_: None)
+
+    assert restored["offloaded"] is False
+    assert restored["analysis"]["chords"]["segments"][0]["label"] == "Am"
+    assert restored["stem_sets"] == {}
+    assert Path(restored["working_path"]).read_bytes() == b"restored audio"

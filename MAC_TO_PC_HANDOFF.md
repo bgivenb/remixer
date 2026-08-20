@@ -6,7 +6,7 @@ The macOS port is complete and the shared application now includes four product 
 
 1. A whole-app Given Peace visual system based on [givenpeace.com](https://www.givenpeace.com/): monochrome surfaces, condensed uppercase headings, hard borders, editorial spacing, and black media panels.
 2. An in-app YouTube player and search browser. The default featured example is [Given Peace — Down So Bad (Official Music Video)](https://www.youtube.com/watch?v=JR2zel8dJts), ID `JR2zel8dJts`, and a selected result can be sent directly to the existing Remixer download workflow.
-   Down So Bad is also a permanent first item in Recents and the startup track. Existing cached audio opens immediately; a clean installation acquires it once through the same normal download path. The virtual pinned item remains available even if its local manifest is removed or the first download is offline.
+   Down So Bad is also a permanent first item in Recents and the startup track. Existing cached audio opens immediately; a clean installation expands the bundled, owner-authorized base asset without a network request. The virtual pinned item remains available if its local manifest is removed.
    `build-tools/Down-So-Bad-Tutorial-Project.zip` contains only the owner-authorized base track and thumbnail. `ensure_tutorial` expands it locally; the mandatory five-step tutorial makes the user run real detection and six-stem separation. Do not re-bundle rendered stems.
 3. Live chord highlighting in both the waveform timeline and progression row.
 4. Click-to-seek on every displayed chord, using the segment's exact start time.
@@ -24,7 +24,7 @@ The Mac work preserves the existing Windows platform branches for CUDA setup, na
 - `src/renderer/featured.ts` — single source of truth for the default video plus featured-track recognition/pinning.
 - `src/renderer/components/Tutorial.tsx` and `HelpCenter.tsx` — required first-run walkthrough plus persistent help reference.
 - `scripts/prepare-tutorial-project.mjs` and `worker/remixer_worker/tutorial.py` — lossless tutorial archive preparation and safe local installation.
-- `worker/remixer_worker/storage.py` and `StorageSettings.tsx` — 5 GB project-audio budget, oldest-inactive offloading, retained lightweight history, manual offload, and source restoration.
+- `worker/remixer_worker/storage.py` and `src/renderer/components/StorageSettings.tsx` — 5 GB project-audio budget, oldest-inactive offloading, retained lightweight history, manual offload, and source restoration.
 - `src/electron/main/main.ts` — packaged desktop-player HTTP referrer identity in addition to the existing platform/lifecycle changes.
 - `worker/remixer_worker/youtube.py` — yt-dlp flat-metadata search with no API key.
 - `worker/remixer_worker/__main__.py` — `search_youtube` worker command dispatch.
@@ -49,7 +49,7 @@ Run these on the actual Windows target after merging:
 1. `npm ci`, `npm run typecheck`, `npm test`, and the Python worker test suite.
 2. Launch both development and packaged NSIS builds and confirm the official Down So Bad player is visible by default.
 3. Search for `Given Peace Down So Bad`; confirm `JR2zel8dJts` is the first official result and selecting it updates the embed.
-4. Test both a clean app-data directory and an existing library: Down So Bad must stay first in Recents and open as the startup track. On the clean directory it should download once; thereafter it should use the cached working WAV.
+4. Test both a clean app-data directory and an existing library: Down So Bad must stay first in Recents and open as the startup track. On the clean directory it should expand from the bundled base archive without downloading YouTube audio; thereafter it should use the cached working WAV.
 5. Use **Remix this song** and confirm it reaches the existing authorized-download flow unchanged.
 6. Import/analyze a track, play through multiple chord boundaries, and confirm the active highlight advances in both chord displays.
 7. Click chords in both the progression row and waveform timeline; confirm the transport seeks to each exact timestamp.
@@ -72,8 +72,8 @@ Important: packaged Electron renderers load from `file://`, which omits the HTTP
 - Real six-stem MLX/MPS smoke: all 7 files contained exactly 88,200 frames.
 - Real Leap XE MLX/MPS smoke: both output files contained exactly 88,200 frames.
 - Leap XE model chunk alignment remains `881559 -> 881152`.
-- Renderer tests: 5 passed.
-- Python tests: 10 passed.
+- Renderer tests: 6 passed.
+- Python tests: 11 passed.
 - TypeScript typecheck and Vite/Electron production builds passed.
 - Live YouTube search returned the official `JR2zel8dJts` result first.
 - Live browser validation confirmed the real YouTube embed, search/result controls, progression-row chord seek, timeline chord seek, and automatic active-chord advancement.
@@ -96,6 +96,8 @@ The final local artifacts are:
 ```text
 release/Remixer-0.1.1-arm64.dmg
 release/Remixer-0.1.1-arm64.zip
+release/Down-So-Bad-Tutorial-Project.zip
+release/SHA256SUMS.txt
 ```
 
 SHA-256 values should be taken from `release/SHA256SUMS.txt` generated with the final package.

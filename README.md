@@ -10,7 +10,7 @@ Remixer is a local macOS producer workstation for acquiring authorized audio, se
 
 The current Mac build is unsigned. After the first launch attempt, macOS may require **System Settings → Privacy & Security → Open Anyway**. A normal trusted Developer ID signature and notarization requires Apple Developer Program membership; see the distribution note below.
 
-The entire interface follows the stark editorial visual system of [givenpeace.com](https://www.givenpeace.com/): black and white surfaces, condensed display type, sharp borders, and minimal decoration. The built-in YouTube browser opens on Given Peace's **Down So Bad** official video, lets listeners search YouTube without leaving Remixer, and can send the selected video directly into the existing audio-import workflow. Down So Bad is also the permanent pinned default track: the app opens it on startup, downloads it through the normal engine on a clean install, and never lets ordinary recent-history ordering displace it.
+The entire interface follows the stark editorial visual system of [givenpeace.com](https://www.givenpeace.com/): black and white surfaces, condensed display type, sharp borders, and minimal decoration. The built-in YouTube browser opens on Given Peace's **Down So Bad** official video, lets listeners search YouTube without leaving Remixer, and can send the selected video directly into the existing audio-import workflow. Down So Bad is also the permanent pinned default track: the app installs its bundled base audio on a clean launch, opens it at startup, and never lets ordinary recent-history ordering displace it.
 
 Release packages include the losslessly compressed Down So Bad base track and thumbnail, not hundreds of megabytes of pre-rendered stems. The first-run five-step walkthrough uses this track exclusively and guides the user through playback, detection, chord navigation, and their first real six-stem separation. The Help button remains available afterward.
 
@@ -42,13 +42,13 @@ There is no legitimate no-fee Developer ID/notarization route for unrestricted p
 
 Approximate Apple Silicon footprint after first setup:
 
-- App plus bundled base tutorial track: about 160 MB compressed.
+- Download package with the bundled base tutorial track: about 159 MB compressed; the installed `.app` is about 347 MB.
 - Private Python/ML audio engine: about 924 MB.
 - Core six-stem model installed during setup: about 667 MB on disk (~699 MB advertised download).
 - Optional HQ-vocal model: about 255 MB on disk (~268 MB advertised download).
 - Expanded Down So Bad base track: about 61 MB.
 
-With both models installed, the fixed baseline is roughly 2.0 GB before user projects. The 5 GB storage preference applies only to growing project audio, not the shared engine or model cache.
+With both models and the expanded base tutorial installed, the fixed baseline is roughly 2.2 GB before user projects. The 5 GB storage preference applies only to growing project audio, not the shared engine or model cache.
 
 ## First launch
 
@@ -58,7 +58,7 @@ Remixer currently expects Homebrew `uv` and FFmpeg on the Mac. Install them once
 brew install uv ffmpeg
 ```
 
-Open Remixer and select **Install audio engine**. The app finds Homebrew tools even when it is launched from Finder, installs an arm64 Python 3.11 environment, and verifies MLX, Torch MPS, FFmpeg, and FFprobe. Model checkpoints are downloaded and SHA-256 verified only when first used.
+Open Remixer and select **Install audio engine**. The app finds Homebrew tools even when it is launched from Finder, installs an arm64 Python 3.11 environment, verifies MLX, Torch MPS, FFmpeg, and FFprobe, and downloads/verifies the core six-stem checkpoint. The optional HQ-vocal model remains an on-demand first-use download.
 
 ## Workflow
 
@@ -111,7 +111,7 @@ Build and package the unsigned Apple Silicon release:
 npm run package
 ```
 
-`build:tutorial` uses the owner-authorized base track at the normal Remixer app-data path. A release builder can override it with `REMIXER_TUTORIAL_SOURCE`. The generated archive stays in `build-tools/` and is intentionally not committed as source; publish it as a release asset alongside the installers.
+`build:tutorial` uses the owner-authorized base track at the normal Remixer app-data path. A release builder can override it with `REMIXER_TUTORIAL_SOURCE`. When no local source/archive exists, the script downloads the pinned `v0.1.1` release asset and verifies its SHA-256 before packaging. The generated archive stays in `build-tools/` and is intentionally not committed as source.
 
 `scripts/package.mjs` selects DMG/ZIP on macOS and retains the existing NSIS path on Windows. Windows CUDA setup and `CF_HDROP` clipboard support remain behind platform dispatch.
 
