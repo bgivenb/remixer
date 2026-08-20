@@ -15,6 +15,8 @@ interface WaveformEditorProps {
   onError: (message: string) => void
   analysis?: AnalysisResult | null
   previewLabel: string
+  seekRequest?: { time: number; nonce: number } | null
+  onTimeChange?: (time: number) => void
 }
 
 export function WaveformEditor({
@@ -26,6 +28,8 @@ export function WaveformEditor({
   onError,
   analysis,
   previewLabel,
+  seekRequest,
+  onTimeChange,
 }: WaveformEditorProps) {
   const containerRef = useRef<HTMLDivElement | null>(null)
   const waveRef = useRef<WaveSurfer | null>(null)
@@ -49,9 +53,9 @@ export function WaveformEditor({
       duration,
       backend: 'MediaElement',
       height: 190,
-      waveColor: '#384255',
-      progressColor: '#d9ff5b',
-      cursorColor: '#f4f7fb',
+      waveColor: '#5f5f5f',
+      progressColor: '#ffffff',
+      cursorColor: '#ffffff',
       cursorWidth: 1,
       barWidth: 2,
       barGap: 1,
@@ -81,7 +85,10 @@ export function WaveformEditor({
     wave.on('play', () => setPlaying(true))
     wave.on('pause', () => setPlaying(false))
     wave.on('finish', () => setPlaying(false))
-    wave.on('timeupdate', (value) => setTime(value))
+    wave.on('timeupdate', (value) => {
+      setTime(value)
+      onTimeChange?.(value)
+    })
     wave.on('error', (waveError) => onError(`Audio preview failed: ${waveError instanceof Error ? waveError.message : String(waveError)}`))
 
     regions.on('region-created', (region) => {
@@ -137,6 +144,15 @@ export function WaveformEditor({
     updatingRef.current = false
   }, [duration, selection])
 
+  useEffect(() => {
+    const wave = waveRef.current
+    if (!wave || !ready || !seekRequest) return
+    const nextTime = Math.max(0, Math.min(seekRequest.time, wave.getDuration()))
+    wave.setTime(nextTime)
+    setTime(nextTime)
+    onTimeChange?.(nextTime)
+  }, [onTimeChange, ready, seekRequest])
+
   const togglePlayback = async () => {
     const wave = waveRef.current
     if (!wave || !ready) return
@@ -163,6 +179,14 @@ export function WaveformEditor({
     if (!wave || !ready) return
     wave.setTime(selection.start)
     setTime(selection.start)
+  }
+
+  const seekToChord = (start: number) => {
+    const wave = waveRef.current
+    if (!wave || !ready) return
+    wave.setTime(start)
+    setTime(start)
+    onTimeChange?.(start)
   }
 
   return (
@@ -200,14 +224,16 @@ export function WaveformEditor({
             const left = (segment.start / duration) * 100
             const width = ((segment.end - segment.start) / duration) * 100
             return (
-              <div
+              <button
                 key={`${segment.label}-${index}`}
-                className="chord-block"
+                className={`chord-block ${time >= segment.start && time < segment.end ? 'active' : ''}`}
                 style={{ left: `${left}%`, width: `${Math.max(width, 0.7)}%` }}
                 title={`${segment.label} · ${Math.round(segment.confidence * 100)}%`}
+                onClick={() => seekToChord(segment.start)}
+                aria-label={`Seek to ${segment.label} at ${formatTime(segment.start)}`}
               >
                 {segment.label}
-              </div>
+              </button>
             )
           })}
         </div>

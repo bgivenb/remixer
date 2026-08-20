@@ -1,0 +1,5 @@
+# Apple Silicon compute stack validated for the pinned BS-RoFormer revision.
+# Torch remains installed because MLX loads the original verified Torch checkpoints.
+torch==2.11.0
+mlx==0.31.0
+mlx-spectro==0.7.0

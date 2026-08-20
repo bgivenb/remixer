@@ -6,6 +6,7 @@ import os
 import re
 import shutil
 import subprocess
+import sys
 import unicodedata
 from datetime import UTC, datetime
 from pathlib import Path
@@ -17,7 +18,14 @@ AUDIO_EXTENSIONS = {".wav", ".flac", ".mp3", ".m4a", ".aac", ".ogg", ".opus", ".
 
 def data_root() -> Path:
     configured = os.environ.get("REMIXER_DATA_DIR")
-    root = Path(configured) if configured else Path.home() / "AppData" / "Local" / "Remixer" / "data"
+    if configured:
+        root = Path(configured)
+    elif sys.platform == "darwin":
+        root = Path.home() / "Library" / "Application Support" / "Remixer" / "data"
+    elif os.name == "nt":
+        root = Path.home() / "AppData" / "Local" / "Remixer" / "data"
+    else:
+        root = Path.home() / ".local" / "share" / "Remixer" / "data"
     root.mkdir(parents=True, exist_ok=True)
     return root
 

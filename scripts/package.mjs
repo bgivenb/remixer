@@ -24,19 +24,28 @@ function run(command, args) {
 }
 
 try {
-  await run(process.execPath, [
+  const builderArgs = [
     path.join(projectRoot, 'node_modules', 'electron-builder', 'cli.js'),
-    '--win',
-    'nsis',
-    `--config.directories.output=${temporaryOutput}`,
-  ])
+  ]
+  if (process.platform === 'darwin') {
+    builderArgs.push('--mac', 'dmg', 'zip', '--arm64')
+  } else if (process.platform === 'win32') {
+    builderArgs.push('--win', 'nsis')
+  } else {
+    throw new Error(`Remixer packaging is not configured for ${process.platform}.`)
+  }
+  builderArgs.push(`--config.directories.output=${temporaryOutput}`)
+  await run(process.execPath, builderArgs)
   await mkdir(destination, { recursive: true })
   const artifacts = await readdir(temporaryOutput)
   for (const artifact of artifacts) {
-    if (!/\.(exe|blockmap|yml)$/i.test(artifact)) continue
+    if (!/\.(exe|dmg|zip|blockmap|yml)$/i.test(artifact)) continue
     await copyFile(path.join(temporaryOutput, artifact), path.join(destination, artifact))
     console.log(`Copied release artifact: ${artifact}`)
   }
+  const tutorialAsset = 'Down-So-Bad-Tutorial-Project.zip'
+  await copyFile(path.join(projectRoot, 'build-tools', tutorialAsset), path.join(destination, tutorialAsset))
+  console.log(`Copied release artifact: ${tutorialAsset}`)
 } finally {
   await rm(temporaryRoot, { recursive: true, force: true })
 }

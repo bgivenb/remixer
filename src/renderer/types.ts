@@ -2,6 +2,8 @@ export interface EngineStatus {
   installed: boolean
   ready: boolean
   python: string | null
+  platform?: string
+  arch?: string
   error?: string
   details?: {
     python: string
@@ -9,6 +11,9 @@ export interface EngineStatus {
     ffmpeg: string | null
     ffprobe: string | null
     cuda: { available: boolean; device: string | null; vram_gb: number | null }
+    mps?: { available: boolean; built: boolean }
+    mlx?: { available: boolean; device: string | null }
+    separation?: { backend: string; device: string; status: 'preferred' | 'loaded' }
     packages: Record<string, boolean>
   }
 }
@@ -16,6 +21,15 @@ export interface EngineStatus {
 export interface Selection {
   start: number
   end: number
+}
+
+export interface YouTubeVideo {
+  id: string
+  title: string
+  channel: string | null
+  duration: number | null
+  thumbnail: string
+  url: string
 }
 
 export interface KeyResult {
@@ -61,6 +75,7 @@ export interface WaveformData {
 export interface StemSet {
   mode: string
   model: string
+  backend?: string
   device: string
   paths: Record<string, string>
   created_at: string
@@ -83,6 +98,27 @@ export interface Track {
   updated_at: string
   analysis?: AnalysisResult | null
   stem_sets: Record<string, StemSet>
+  offloaded?: boolean
+  tutorial?: boolean
+}
+
+export interface StorageProject {
+  id: string
+  title: string
+  track_dir: string
+  updated_at: string
+  size_bytes: number
+  offloaded: boolean
+  tutorial: boolean
+}
+
+export interface StorageStatus {
+  limit_mb: number
+  minimum_limit_mb: number
+  used_bytes: number
+  cleaned_bytes?: number
+  cleaned_projects?: string[]
+  projects: StorageProject[]
 }
 
 export interface WorkerMessage {

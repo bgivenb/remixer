@@ -1,35 +1,74 @@
 # Remixer
 
-Remixer is a local Windows producer workstation for acquiring authorized audio, selecting and previewing waveform regions, detecting musical structure, separating stems on an NVIDIA GPU, and copying Ableton-ready WAV files to the Windows clipboard.
+Remixer is a local macOS producer workstation for acquiring authorized audio, selecting and previewing waveform regions, detecting musical structure, separating stems on Apple Silicon, and copying Ableton-ready WAV files through the macOS file clipboard.
 
-## Launch
+## Download
 
-Remixer is installed for the current Windows user and has a **Remixer** desktop shortcut.
+- [Download Remixer for Apple Silicon (.dmg)](https://github.com/bgivenb/remixer/releases/latest/download/Remixer-0.1.1-arm64.dmg)
+- [Download the portable Mac build (.zip)](https://github.com/bgivenb/remixer/releases/latest/download/Remixer-0.1.1-arm64.zip)
+- [View all releases](https://github.com/bgivenb/remixer/releases)
 
-The generated installer is:
+The current Mac build is unsigned. After the first launch attempt, macOS may require **System Settings → Privacy & Security → Open Anyway**. A normal trusted Developer ID signature and notarization requires Apple Developer Program membership; see the distribution note below.
+
+The entire interface follows the stark editorial visual system of [givenpeace.com](https://www.givenpeace.com/): black and white surfaces, condensed display type, sharp borders, and minimal decoration. The built-in YouTube browser opens on Given Peace's **Down So Bad** official video, lets listeners search YouTube without leaving Remixer, and can send the selected video directly into the existing audio-import workflow. Down So Bad is also the permanent pinned default track: the app opens it on startup, downloads it through the normal engine on a clean install, and never lets ordinary recent-history ordering displace it.
+
+Release packages include the losslessly compressed Down So Bad base track and thumbnail, not hundreds of megabytes of pre-rendered stems. The first-run five-step walkthrough uses this track exclusively and guides the user through playback, detection, chord navigation, and their first real six-stem separation. The Help button remains available afterward.
+
+Settings includes a project-audio budget with a 5 GB default and a 500 MB minimum. When usage exceeds the limit, Remixer offloads the oldest inactive project audio while retaining its lightweight history, source reference, thumbnail, BPM, key, selections, and chord map. Opening an offloaded project restores its source; stems can then be regenerated as needed. The active project and bundled tutorial are protected from automatic offloading.
+
+## macOS release
+
+The supported Mac release target is Apple Silicon (`arm64`) on macOS 12 or newer. Build artifacts are written to `release/`:
 
 ```text
-release/Remixer-Setup-0.1.1-x64.exe
+release/Remixer-0.1.1-arm64.dmg
+release/Remixer-0.1.1-arm64.zip
 ```
 
-The app and engine are installed separately so large Python/CUDA dependencies do not make every UI update enormous:
+The UI and audio engine are installed separately so model and Python dependencies do not make every UI update enormous:
 
 ```text
-App:     %LOCALAPPDATA%\Programs\Remixer
-Engine:  %LOCALAPPDATA%\Remixer\engine
-Models:  %LOCALAPPDATA%\Remixer\models
-Tracks:  %LOCALAPPDATA%\Remixer\data\tracks
+App data: ~/Library/Application Support/Remixer
+Engine:   ~/Library/Application Support/Remixer/engine
+Models:   ~/Library/Application Support/Remixer/models
+Tracks:   ~/Library/Application Support/Remixer/data/tracks
 ```
+
+The local development build is unsigned. A distributable release still needs the owner's Developer ID signing identity, hardened-runtime entitlements, notarization, and stapling.
+
+There is no legitimate no-fee Developer ID/notarization route for unrestricted public Mac distribution. Apple allows free development and personal testing, but Developer ID and notarization are part of the $99/year Apple Developer Program. Eligible nonprofits, accredited educational institutions, and government entities can request Apple's fee waiver. Until enrollment, releases remain unsigned and users must explicitly approve them in macOS Privacy & Security.
+
+## Installed size
+
+Approximate Apple Silicon footprint after first setup:
+
+- App plus bundled base tutorial track: about 160 MB compressed.
+- Private Python/ML audio engine: about 924 MB.
+- Core six-stem model installed during setup: about 667 MB on disk (~699 MB advertised download).
+- Optional HQ-vocal model: about 255 MB on disk (~268 MB advertised download).
+- Expanded Down So Bad base track: about 61 MB.
+
+With both models installed, the fixed baseline is roughly 2.0 GB before user projects. The 5 GB storage preference applies only to growing project audio, not the shared engine or model cache.
+
+## First launch
+
+Remixer currently expects Homebrew `uv` and FFmpeg on the Mac. Install them once:
+
+```bash
+brew install uv ffmpeg
+```
+
+Open Remixer and select **Install audio engine**. The app finds Homebrew tools even when it is launched from Finder, installs an arm64 Python 3.11 environment, and verifies MLX, Torch MPS, FFmpeg, and FFprobe. Model checkpoints are downloaded and SHA-256 verified only when first used.
 
 ## Workflow
 
-1. Paste one YouTube video URL or choose **Import audio**.
+1. Play or search YouTube in the built-in browser, choose **Remix this song**, paste another authorized YouTube video URL, or choose **Import audio**. The featured example is [Given Peace — Down So Bad](https://www.youtube.com/watch?v=JR2zel8dJts).
 2. Choose **New selection**, then drag across the waveform. Use **Adjust** to move the highlighted region or resize its bright edge handles. Press play with **Loop** enabled to confirm it.
-3. Select **Detect key, BPM & chords**. Key and BPM describe the track; chords describe the selected region. Click the small alternate value when a half/double-time tempo or key mode is musically ambiguous.
+3. Select **Detect key, BPM & chords**. Key and BPM describe the track; chords describe the selected region. The chord playing at the current transport time is highlighted in both the waveform and progression, and every chord can be clicked to seek directly to its start. Alternate tempo and key choices remain available for musical ambiguity.
 4. Choose **Six stems** or **HQ vocals**.
 5. Preview the resulting stems.
 6. Use **Full**, **Selection**, **Copy all full**, or **Copy all selection**.
-7. Paste the files into Explorer or another Windows file-list destination. From Explorer they can be imported into Ableton Live. Direct paste behavior inside Live can vary by version and focused view.
+7. Paste one or more file items into Finder, then drag or import them into Ableton Live as needed. **Files** remains the reliable fallback for Live views that do not accept a direct paste.
 
 Selections are rendered sample-accurately as 32-bit float WAV files. Stems are never normalized independently, so their relative balance and alignment are preserved.
 
@@ -37,65 +76,45 @@ Selections are rendered sample-accurately as 32-bit float WAV files. Stems are n
 
 - **Six stems:** `roformer-model-bs-roformer-sw-by-jarredou` / BS-RoFormer SW Fixed
 - **HQ vocals:** `roformer-model-bs-roformer-leap-xe-vocals-by-pcunwa` / Leap XE
-- **Backend:** `bs-roformer-infer` pinned to commit `b0f1386fcced25f559f3e61c9f08a73cd9bddf80`
-- **Compute:** CUDA-enabled PyTorch 2.11 on the RTX 3080, with an explicit slower CPU fallback
+- **Engine:** `bs-roformer-infer` pinned to commit `b0f1386fcced25f559f3e61c9f08a73cd9bddf80`
+- **Mac compute order:** native MLX, Torch MPS, then Torch CPU
 
-Checkpoint bytes are not bundled in the installer. The backend downloads them from its pinned registry, validates their SHA-256 hashes, and caches them locally. The six-stem checkpoint has already been downloaded and verified on this PC. The Leap XE checkpoint downloads on its first use.
+The Apple Silicon engine pins Torch 2.11.0, MLX 0.31.0, and mlx-spectro 0.7.0. Both named models have been exercised through MLX with exact input/output frame-count validation. Leap XE keeps the STFT-hop chunk alignment fix (`881559 -> 881152`).
 
 ## Audio analysis
 
-The local Python worker uses librosa-based analysis:
+The local worker uses librosa for beat tracking, selectable half/double-time BPM candidates, passage-voted key profiles with Camelot codes, and beat-synchronized chord matching. These estimates are probabilistic, so the UI exposes alternatives instead of hiding ambiguity.
 
-- Beat tracking and BPM estimation
-- Half/double-time tempo candidates with a switchable working BPM
-- Frame-normalized, passage-voted key profiles with Camelot code and mode alternatives
-- Beat-synchronized chroma template matching with temporal smoothing for chord segments
+Waveforms use compact peaks computed by the persistent worker. Playback uses byte-range streaming from the lossless working WAV, so long files remain seekable without sending full decoded audio arrays over IPC.
 
-Automatic key and chord recognition is probabilistic. Dense mixes, inversions, borrowed chords, and harmony that omits the major/minor third can reduce certainty, so the UI exposes alternatives instead of hiding ambiguity.
+## YouTube discovery
 
-Waveforms use compact peaks computed by the local worker, while playback uses byte-range streaming from the source WAV. Long files therefore become seekable without making Chromium decode the entire lossless file into memory first.
-
-## Architecture
-
-```text
-Electron + React + WaveSurfer
-        │ IPC / JSON-lines
-Persistent Python 3.11 worker
-        ├── yt-dlp + FFmpeg
-        ├── librosa + soundfile
-        └── bs-roformer-infer + CUDA PyTorch
-                 │
-       Cached float-WAV stems and clips
-                 │
-        Windows CF_HDROP file clipboard
-```
-
-No local web server, UVR GUI, Docker, Demucs, or ONNX Runtime is used.
+The official `youtube-nocookie.com` embed is used for playback, while search metadata is obtained locally through the installed yt-dlp engine. The packaged desktop player identifies itself with the first-party `givenpeace.com` HTTP referrer, as required by YouTube's embedded-player policy; no YouTube API key or hosted Remixer service is required. Electron context isolation remains enabled and the remote player is not granted Node.js access. Processing remains subject to the responsible-use requirements below.
 
 ## Development
 
-```powershell
-npm install
-powershell -ExecutionPolicy Bypass -File .\scripts\setup-engine.ps1
+```bash
+brew install uv ffmpeg
+npm ci
+npm run build:mac-helper
+npm run build:tutorial
+./scripts/setup-engine.sh "$HOME/Library/Application Support/Remixer/engine"
+npm run typecheck
+npm test
+PYTHONPATH="$PWD/worker" "$HOME/Library/Application Support/Remixer/engine/.venv/bin/python" -m pytest worker/tests -q
 npm run dev
 ```
 
-Build and package:
+Build and package the unsigned Apple Silicon release:
 
-```powershell
-npm run typecheck
-npm test
-npm run build
+```bash
 npm run package
 ```
 
-Python tests:
+`build:tutorial` uses the owner-authorized base track at the normal Remixer app-data path. A release builder can override it with `REMIXER_TUTORIAL_SOURCE`. The generated archive stays in `build-tools/` and is intentionally not committed as source; publish it as a release asset alongside the installers.
 
-```powershell
-$env:PYTHONPATH = (Resolve-Path .\worker).Path
-& "$env:LOCALAPPDATA\Remixer\engine\.venv\Scripts\python.exe" -m pytest .\worker\tests -q --basetemp .\.pytest-work
-```
+`scripts/package.mjs` selects DMG/ZIP on macOS and retains the existing NSIS path on Windows. Windows CUDA setup and `CF_HDROP` clipboard support remain behind platform dispatch.
 
 ## Responsible use
 
-Download only audio you own, material in the public domain or under an appropriate license, or content you otherwise have permission to download. The application does not attempt to bypass DRM, authentication, geographic restrictions, or access controls.
+Download only audio you own, material in the public domain or under an appropriate license, or content you otherwise have permission to download. Remixer does not bypass DRM, authentication, geographic restrictions, or access controls. Model licenses and provenance should be reviewed before redistribution or commercial use.

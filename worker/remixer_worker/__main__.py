@@ -22,10 +22,38 @@ def dispatch(request: dict[str, Any], report) -> Any:
         from .tracks import download_url
 
         return download_url(str(request["url"]), report)
+    if command == "search_youtube":
+        from .youtube import search_youtube
+
+        return search_youtube(str(request.get("query") or ""), int(request.get("limit") or 8))
     if command == "list_tracks":
         from .tracks import list_tracks
 
         return list_tracks()
+    if command == "ensure_tutorial":
+        from .tutorial import ensure_tutorial
+
+        return ensure_tutorial(report)
+    if command == "restore_track":
+        from .tracks import restore_track
+
+        return restore_track(str(request["track_dir"]), report)
+    if command == "storage_status":
+        from .storage import storage_status
+
+        return storage_status()
+    if command == "cleanup_storage":
+        from .storage import cleanup_storage
+
+        return cleanup_storage(report, str(request.get("protected_track_dir") or "") or None, bool(request.get("force")))
+    if command == "set_storage_limit":
+        from .storage import set_storage_limit
+
+        return set_storage_limit(int(request["limit_mb"]), report, str(request.get("protected_track_dir") or "") or None)
+    if command == "offload_project":
+        from .storage import offload_project
+
+        return offload_project(str(request["track_dir"]))
     if command == "waveform":
         from .waveform import waveform_peaks
 
@@ -43,6 +71,10 @@ def dispatch(request: dict[str, Any], report) -> Any:
         from .separation import separate
 
         return separate(str(request["track_dir"]), str(request.get("mode", "full")), report)
+    if command == "prepare_model":
+        from .separation import prepare_model
+
+        return prepare_model(str(request.get("mode", "full")), report)
     if command == "release_models":
         from .separation import release_models
 

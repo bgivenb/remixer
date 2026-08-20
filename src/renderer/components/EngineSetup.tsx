@@ -9,6 +9,7 @@ interface EngineSetupProps {
 }
 
 export function EngineSetup({ status, installing, installLog, onInstall }: EngineSetupProps) {
+  const isMac = status?.platform === 'darwin' || navigator.platform.startsWith('Mac')
   return (
     <main className="setup-shell">
       <section className="setup-card panel">
@@ -16,11 +17,11 @@ export function EngineSetup({ status, installing, installLog, onInstall }: Engin
         <p className="eyebrow">One-time setup</p>
         <h1>Install the local audio engine</h1>
         <p className="setup-copy">
-          Remixer needs its private Python, CUDA, analysis, download, and BS-RoFormer packages. Models are downloaded and verified only when you first use them.
+          Remixer installs its private Python, {isMac ? 'Apple Silicon compute' : 'CUDA'}, audio tools, and the core six-stem model. This one-time download is about 1.6 GB. The optional HQ-vocal model downloads only if you choose it later.
         </p>
         <div className="setup-specs">
-          <span><Cpu size={16} /> RTX 3080 acceleration</span>
-          <span><Download size={16} /> Approximately 6 GB engine install</span>
+          <span><Cpu size={16} /> {isMac ? 'Native MLX with MPS fallback' : 'NVIDIA GPU acceleration'}</span>
+          <span><Download size={16} /> Engine + six-stem model from Hugging Face</span>
         </div>
         {status?.error ? <div className="error-banner">{status.error}</div> : null}
         <button className="hero-button" disabled={installing} onClick={onInstall}>
@@ -32,4 +33,3 @@ export function EngineSetup({ status, installing, installLog, onInstall }: Engin
     </main>
   )
 }
-

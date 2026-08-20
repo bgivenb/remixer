@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   AudioLines,
   Clipboard,
@@ -8,12 +8,15 @@ import {
   FileAudio,
   FolderOpen,
   Gauge,
+  GraduationCap,
+  HelpCircle,
   History,
   KeyRound,
   LoaderCircle,
   Music2,
   RotateCcw,
   Scissors,
+  Settings,
   Sparkles,
   Square,
   WandSparkles,
@@ -21,8 +24,13 @@ import {
 import { EngineSetup } from './components/EngineSetup'
 import { StemRack } from './components/StemRack'
 import { WaveformEditor } from './components/WaveformEditor'
-import type { AnalysisResult, EngineStatus, KeyResult, ProgressState, Selection, StemSet, Track, WaveformData, WorkerMessage } from './types'
+import { YouTubeBrowser } from './components/YouTubeBrowser'
+import { HelpCenter } from './components/HelpCenter'
+import { Tutorial } from './components/Tutorial'
+import { StorageSettings } from './components/StorageSettings'
+import type { AnalysisResult, EngineStatus, KeyResult, ProgressState, Selection, StemSet, StorageStatus, Track, WaveformData, WorkerMessage, YouTubeVideo } from './types'
 import { bpmChoices, confidenceLabel, estimatedBars, formatDuration, selectionIsFull } from './lib'
+import { FEATURED_VIDEO, isFeaturedTrack, pinFeaturedTrack } from './featured'
 
 const CAMELOT_MAJOR = ['8B', '3B', '10B', '5B', '12B', '7B', '2B', '9B', '4B', '11B', '6B', '1B']
 const CAMELOT_MINOR = ['5A', '12A', '7A', '2A', '9A', '4A', '11A', '6A', '1A', '8A', '3A', '10A']
@@ -37,6 +45,7 @@ function App() {
   const [installing, setInstalling] = useState(false)
   const [installLog, setInstallLog] = useState('')
   const [recentTracks, setRecentTracks] = useState<Track[]>([])
+  const [libraryLoaded, setLibraryLoaded] = useState(false)
   const [track, setTrack] = useState<Track | null>(null)
   const [url, setUrl] = useState('')
   const [selection, setSelection] = useState<Selection>({ start: 0, end: 0 })
@@ -52,16 +61,32 @@ function App() {
   const [progress, setProgress] = useState<ProgressState | null>(null)
   const [toast, setToast] = useState('')
   const [error, setError] = useState('')
+  const [playbackTime, setPlaybackTime] = useState(0)
+  const [seekRequest, setSeekRequest] = useState<{ time: number; nonce: number } | null>(null)
+  const [helpOpen, setHelpOpen] = useState(false)
+  const [tutorialOpen, setTutorialOpen] = useState(() => window.localStorage.getItem('remixer:tutorial-complete') !== '1')
+  const [tutorialStep, setTutorialStep] = useState(0)
+  const [settingsOpen, setSettingsOpen] = useState(false)
+  const [storage, setStorage] = useState<StorageStatus | null>(null)
+  const [storageBusy, setStorageBusy] = useState(false)
+  const featuredBootStarted = useRef(false)
 
   const refreshTracks = useCallback(async () => {
     const tracks = await window.remixer.runWorker<Track[]>({ command: 'list_tracks' })
-    setRecentTracks(tracks)
+    const pinnedTracks = pinFeaturedTrack(tracks)
+    setRecentTracks(pinnedTracks)
+    setLibraryLoaded(true)
+    return pinnedTracks
   }, [])
 
   const checkEngine = useCallback(async () => {
     const status = await window.remixer.getEngineStatus()
     setEngine(status)
-    if (status.ready) await refreshTracks()
+    if (status.ready) {
+      await window.remixer.runWorker<Track | null>({ command: 'ensure_tutorial' })
+      await window.remixer.runWorker<StorageStatus>({ command: 'cleanup_storage' })
+      await refreshTracks()
+    }
   }, [refreshTracks])
 
   useEffect(() => {
@@ -136,8 +161,23 @@ function App() {
     setSelection(saved || { start: 0, end: Math.min(nextTrack.duration, 30) })
     setPreviewPath(nextTrack.working_path)
     setPreviewLabel('Original mix')
+    setPlaybackTime(0)
+    setSeekRequest(null)
     setError('')
   }, [])
+
+  const selectTrack = async (nextTrack: Track) => {
+    if (!nextTrack.offloaded) {
+      openTrack(nextTrack)
+      return
+    }
+    const restored = await runTask(() => window.remixer.runWorker<Track>({ command: 'restore_track', track_dir: nextTrack.track_dir }))
+    if (restored) {
+      openTrack(restored)
+      await refreshTracks()
+      setToast('Project audio restored; analysis was preserved')
+    }
+  }
 
   const installEngine = async () => {
     setInstalling(true)
@@ -163,17 +203,31 @@ function App() {
     }
   }
 
-  const downloadTrack = async () => {
-    if (!url.trim()) {
+  const downloadTrack = async (requestedUrl = url) => {
+    const sourceUrl = requestedUrl.trim()
+    if (!sourceUrl) {
       setError('Paste a YouTube video URL first.')
       return
     }
-    const downloaded = await runTask(() => window.remixer.runWorker<Track>({ command: 'download', url: url.trim() }))
+    setUrl(sourceUrl)
+    const downloaded = await runTask(() => window.remixer.runWorker<Track>({ command: 'download', url: sourceUrl }))
     if (downloaded) {
       openTrack(downloaded)
       await refreshTracks()
     }
   }
+
+  useEffect(() => {
+    if (!engine?.ready || !libraryLoaded || featuredBootStarted.current) return
+    featuredBootStarted.current = true
+    setUrl(FEATURED_VIDEO.url)
+    const existingFeaturedTrack = recentTracks.find(isFeaturedTrack)
+    if (existingFeaturedTrack) {
+      openTrack(existingFeaturedTrack)
+      return
+    }
+    void downloadTrack(FEATURED_VIDEO.url)
+  }, [engine?.ready, libraryLoaded, recentTracks, openTrack])
 
   const analyze = async () => {
     if (!track) return
@@ -201,6 +255,7 @@ function App() {
       setTrack((current) => current ? { ...current, stem_sets: { ...current.stem_sets, [mode]: result } } : current)
       setToast(mode === 'full' ? 'Six stems are ready' : 'HQ vocals are ready')
       await refreshTracks()
+      await window.remixer.runWorker<StorageStatus>({ command: 'cleanup_storage', protected_track_dir: track.track_dir })
     }
   }
 
@@ -233,6 +288,8 @@ function App() {
   }
 
   const stemEntries = activeStemSet ? Object.entries(activeStemSet.paths) : []
+  const featuredTrack = recentTracks.find(isFeaturedTrack)
+  const otherRecentTracks = recentTracks.filter((item) => !isFeaturedTrack(item))
   const tempoOptions = bpmChoices(analysis)
   const detectedKeyOptions = analysis
     ? [analysis.key, ...(analysis.key.alternatives || [])].filter((candidate, index, values) => (
@@ -244,6 +301,12 @@ function App() {
   ))
   const bars = estimatedBars(selection, selectedBpm || analysis?.bpm)
   const chordText = analysis?.chords.progression.join('  →  ') || ''
+  const compute = engine?.details?.separation
+  const computeLabel = compute?.backend === 'mlx'
+    ? 'Apple Silicon GPU'
+    : engine?.details?.cuda.device || (compute?.device === 'mps' ? 'Apple GPU via MPS' : 'Local engine')
+  const computeDetail = compute ? `${compute.backend.toUpperCase()} · ${compute.device.toUpperCase()}` : 'CPU'
+  const fileDestination = engine?.platform === 'darwin' ? 'Finder' : 'Explorer'
 
   const cycleTempo = () => {
     if (tempoOptions.length < 2) return
@@ -257,6 +320,91 @@ function App() {
     setToast('Chord progression copied')
   }
 
+  const useYouTubeVideo = (video: YouTubeVideo) => {
+    void downloadTrack(video.url)
+  }
+
+  const startTutorial = () => {
+    setHelpOpen(false)
+    setTutorialStep(0)
+    setTutorialOpen(true)
+    if (featuredTrack) openTrack(featuredTrack)
+    else void downloadTrack(FEATURED_VIDEO.url)
+  }
+
+  const tutorialTrackReady = Boolean(featuredTrack && !featuredTrack.offloaded)
+  const tutorialRequired = window.localStorage.getItem('remixer:tutorial-complete') !== '1'
+  const useTutorialTrack = () => { if (featuredTrack) openTrack(featuredTrack) }
+  const showTutorialOriginal = () => {
+    if (!featuredTrack) return
+    openTrack(featuredTrack)
+    setPreviewPath(featuredTrack.working_path)
+    setPreviewLabel('Original mix')
+  }
+  const jumpTutorialChord = async (): Promise<boolean> => {
+    if (!featuredTrack) return false
+    openTrack(featuredTrack)
+    const result = await runTask(() => window.remixer.runWorker<AnalysisResult>({ command: 'analyze', track_dir: featuredTrack.track_dir, start: 0, end: featuredTrack.duration }))
+    if (!result) return false
+    setAnalysis(result)
+    setSelectedBpm(bpmChoices(result)[0] || result.bpm)
+    setSelectedKey(result.key)
+    setTrack((current) => current ? { ...current, analysis: result } : current)
+    const chord = result.chords.segments.find((segment) => segment.start > 1) || result.chords.segments[0]
+    if (chord) seekToChord(chord.start)
+    await refreshTracks()
+    return true
+  }
+  const previewTutorialVocal = async (): Promise<boolean> => {
+    if (!featuredTrack) return false
+    openTrack(featuredTrack)
+    const result = await runTask(() => window.remixer.runWorker<StemSet>({ command: 'separate', track_dir: featuredTrack.track_dir, mode: 'full' }))
+    if (!result) return false
+    setActiveStemSet(result)
+    setTrack((current) => current ? { ...current, stem_sets: { ...current.stem_sets, full: result } } : current)
+    const vocal = result.paths.vocals
+    if (vocal) {
+      setPreviewPath(vocal)
+      setPreviewLabel('Vocals')
+    }
+    await refreshTracks()
+    return true
+  }
+  const completeTutorial = () => {
+    window.localStorage.setItem('remixer:tutorial-complete', '1')
+    setTutorialOpen(false)
+    setToast('Tutorial complete — make it yours')
+  }
+
+  const openSettings = async () => {
+    setSettingsOpen(true)
+    try {
+      setStorage(await window.remixer.runWorker<StorageStatus>({ command: 'storage_status' }))
+    } catch (storageError) {
+      setError(storageError instanceof Error ? storageError.message : String(storageError))
+      setSettingsOpen(false)
+    }
+  }
+
+  const updateStorage = async (request: Record<string, unknown>) => {
+    setStorageBusy(true)
+    try {
+      const status = await window.remixer.runWorker<StorageStatus>({ ...request, protected_track_dir: track?.track_dir })
+      setStorage(status)
+      await refreshTracks()
+      if (status.cleaned_bytes) setToast(`Offloaded ${(status.cleaned_bytes / 1024 / 1024).toFixed(0)} MB; history retained`)
+    } catch (storageError) {
+      setError(storageError instanceof Error ? storageError.message : String(storageError))
+    } finally {
+      setStorageBusy(false)
+    }
+  }
+
+  const seekToChord = (time: number) => {
+    setSeekRequest({ time, nonce: Date.now() })
+    setPlaybackTime(time)
+  }
+
   if (!engine?.ready) {
     return <EngineSetup status={engine} installing={installing} installLog={installLog} onInstall={() => void installEngine()} />
   }
@@ -265,19 +413,23 @@ function App() {
     <div className="app-shell">
       <header className="app-header">
         <div className="brand"><span className="brand-mark"><AudioLines size={21} /></span><div><strong>REMIXER</strong><span>Prepare. Separate. Create.</span></div></div>
-        <div className="engine-pill"><span className="status-dot" /><Cpu size={14} /> {engine.details?.cuda.device || 'Local engine'}<span>{engine.details?.cuda.vram_gb ? `${engine.details.cuda.vram_gb} GB` : 'CPU'}</span></div>
+        <div className="header-actions"><button onClick={startTutorial}><GraduationCap size={14} /> Tutorial</button><button onClick={() => setHelpOpen(true)}><HelpCircle size={14} /> Help</button><button onClick={() => void openSettings()}><Settings size={14} /> Settings</button><div className="engine-pill"><span className="status-dot" /><Cpu size={14} /> {computeLabel}<span>{engine.details?.cuda.vram_gb ? `${engine.details.cuda.vram_gb} GB` : computeDetail}</span></div></div>
       </header>
 
       <main className="workspace-shell">
         <aside className="library-panel">
           <div className="library-heading"><History size={16} /><span>Recent tracks</span></div>
           <div className="recent-list">
-            {recentTracks.length ? recentTracks.map((item) => (
-              <button key={`${item.track_dir}-${item.updated_at}`} className={`recent-track ${track?.track_dir === item.track_dir ? 'active' : ''}`} onClick={() => openTrack(item)}>
+            <button className={`recent-track pinned ${featuredTrack && track?.track_dir === featuredTrack.track_dir ? 'active' : ''}`} onClick={() => featuredTrack ? openTrack(featuredTrack) : void downloadTrack(FEATURED_VIDEO.url)} disabled={busy && !featuredTrack}>
+              <span className="recent-icon"><Music2 size={16} /></span>
+              <span><em className="recent-pin">Default · Given Peace</em><strong>{FEATURED_VIDEO.title}</strong><small>{featuredTrack?.analysis ? `${bpmChoices(featuredTrack.analysis).slice(0, 2).map((value) => value.toFixed(1)).join('/')} BPM · ${featuredTrack.analysis.key.label}` : featuredTrack ? formatDuration(featuredTrack.duration) : 'Click to download the example'}</small></span>
+            </button>
+            {otherRecentTracks.map((item) => (
+              <button key={`${item.track_dir}-${item.updated_at}`} className={`recent-track ${track?.track_dir === item.track_dir ? 'active' : ''}`} onClick={() => void selectTrack(item)}>
                 <span className="recent-icon"><Music2 size={16} /></span>
-                <span><strong>{item.title}</strong><small>{item.analysis ? `${bpmChoices(item.analysis).slice(0, 2).map((value) => value.toFixed(1)).join('/')} BPM · ${item.analysis.key.label}` : formatDuration(item.duration)}</small></span>
+                <span>{item.offloaded ? <em className="recent-pin">Offloaded · analysis saved</em> : null}<strong>{item.title}</strong><small>{item.analysis ? `${bpmChoices(item.analysis).slice(0, 2).map((value) => value.toFixed(1)).join('/')} BPM · ${item.analysis.key.label}` : formatDuration(item.duration)}</small></span>
               </button>
-            )) : <p className="empty-copy">Downloaded and imported tracks will appear here.</p>}
+            ))}
           </div>
         </aside>
 
@@ -288,6 +440,8 @@ function App() {
             <span className="or-divider">or</span>
             <button className="secondary-button" onClick={() => void importFile()} disabled={busy}><FileAudio size={16} /> Import audio</button>
           </section>
+
+          <YouTubeBrowser disabled={busy} onUseVideo={useYouTubeVideo} />
 
           {error ? <div className="error-banner"><span>{error}</span><button onClick={() => setError('')}>×</button></div> : null}
           {busy && progress ? (
@@ -320,15 +474,15 @@ function App() {
                 <button className="analyze-button" onClick={() => void analyze()} disabled={busy}><WandSparkles size={18} /> Detect key, BPM & chords</button>
               </section>
 
-              {mediaUrl && waveformData ? <WaveformEditor url={mediaUrl} peaks={waveformData.peaks} duration={waveformData.duration || track.duration} selection={selection} onSelectionChange={setSelection} onError={setError} analysis={analysis} previewLabel={previewLabel} /> : <section className="wave-panel panel waveform-loading"><LoaderCircle className="spin" size={18} /> Preparing instant waveform…</section>}
+              {mediaUrl && waveformData ? <WaveformEditor url={mediaUrl} peaks={waveformData.peaks} duration={waveformData.duration || track.duration} selection={selection} onSelectionChange={setSelection} onError={setError} analysis={analysis} previewLabel={previewLabel} seekRequest={seekRequest} onTimeChange={setPlaybackTime} /> : <section className="wave-panel panel waveform-loading"><LoaderCircle className="spin" size={18} /> Preparing instant waveform…</section>}
 
               <section className="panel progression-panel">
                 <div className="section-heading compact"><div><p className="eyebrow">Selected segment</p><h2>Chord progression</h2></div>{chordText ? <button className="small-button" onClick={() => void copyChordText()}><ClipboardCopy size={14} /> Copy chords</button> : null}</div>
-                {chordText ? <div className="chord-progression">{analysis!.chords.progression.map((chord, index) => <span key={`${chord}-${index}`}>{chord}</span>)}</div> : <p className="empty-copy">Select the useful part of the waveform, preview it, then run detection.</p>}
+                {chordText ? <div className="chord-progression">{analysis!.chords.segments.map((segment, index) => <button className={playbackTime >= segment.start && playbackTime < segment.end ? 'active' : ''} key={`${segment.label}-${segment.start}-${index}`} onClick={() => seekToChord(segment.start)} title={`Jump to ${formatDuration(segment.start)}`}>{segment.label}<small>{formatDuration(segment.start)}</small></button>)}</div> : <p className="empty-copy">Select the useful part of the waveform, preview it, then run detection.</p>}
               </section>
 
               <section className="copy-source-panel panel">
-                <div><p className="eyebrow">Original mix</p><h2>Copy audio to clipboard</h2><span>Paste the WAV into Explorer or a compatible destination.</span></div>
+                <div><p className="eyebrow">Original mix</p><h2>Copy audio to clipboard</h2><span>Paste the WAV into {fileDestination} or a compatible destination.</span></div>
                 <div className="copy-actions">
                   <button className="secondary-button" onClick={() => void copyFullFiles([track.working_path], 'Full mix')}><ClipboardCopy size={16} /> Copy full track</button>
                   <button className="primary-button" onClick={() => void copySelectionFiles({ mix: track.working_path }, 'Mix selection')} disabled={selection.end <= selection.start}><Clipboard size={16} /> Copy selection</button>
@@ -368,6 +522,9 @@ function App() {
         </div>
       </main>
       {toast ? <div className="toast"><Clipboard size={16} /> {toast}</div> : null}
+      {helpOpen ? <HelpCenter onClose={() => setHelpOpen(false)} onStartTutorial={startTutorial} /> : null}
+      {tutorialOpen ? <Tutorial step={tutorialStep} ready={tutorialTrackReady} required={tutorialRequired} onStepChange={setTutorialStep} onUseTrack={useTutorialTrack} onOriginal={showTutorialOriginal} onChord={jumpTutorialChord} onVocal={previewTutorialVocal} onComplete={completeTutorial} onClose={() => setTutorialOpen(false)} /> : null}
+      {settingsOpen && storage ? <StorageSettings status={storage} busy={storageBusy} activeTrackDir={track?.track_dir} onClose={() => setSettingsOpen(false)} onLimit={(limitMb) => void updateStorage({ command: 'set_storage_limit', limit_mb: limitMb })} onCleanup={() => void updateStorage({ command: 'cleanup_storage', force: true })} onOffload={(trackDir) => void updateStorage({ command: 'offload_project', track_dir: trackDir })} /> : null}
     </div>
   )
 }

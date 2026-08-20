@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { bpmChoices, clampSelection, estimatedBars, formatDuration, formatTime, selectionIsFull, stemDisplayName } from './lib'
+import { FEATURED_VIDEO, isFeaturedTrack, pinFeaturedTrack } from './featured'
+import type { Track } from './types'
 
 describe('renderer utilities', () => {
   it('formats transport time with milliseconds', () => {
@@ -23,5 +25,12 @@ describe('renderer utilities', () => {
 
   it('surfaces double-time when an older analysis only stored half-time', () => {
     expect(bpmChoices({ bpm: 73.83 } as never)).toEqual([147.66, 73.83])
+  })
+
+  it('recognizes and pins the permanent Given Peace example', () => {
+    const ordinary = { id: 'ordinary', source_url: null } as Track
+    const featured = { id: 'other-id', source_url: FEATURED_VIDEO.url } as Track
+    expect(isFeaturedTrack(featured)).toBe(true)
+    expect(pinFeaturedTrack([ordinary, featured])).toEqual([featured, ordinary])
   })
 })

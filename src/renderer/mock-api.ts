@@ -1,4 +1,5 @@
-import type { AnalysisResult, StemSet, Track, WaveformData, WorkerMessage } from './types'
+import type { AnalysisResult, StemSet, Track, WaveformData, WorkerMessage, YouTubeVideo } from './types'
+import { FEATURED_VIDEO } from './featured'
 
 function toneUrl(duration = 12, sampleRate = 8000): string {
   const sampleCount = duration * sampleRate
@@ -55,7 +56,8 @@ const analysis: AnalysisResult = {
 const stems: StemSet = {
   mode: 'full',
   model: 'roformer-model-bs-roformer-sw-by-jarredou',
-  device: 'cuda:0',
+  backend: 'mlx',
+  device: 'mps',
   paths: Object.fromEntries(['vocals', 'drums', 'bass', 'guitar', 'piano', 'other', 'instrumental'].map((stem) => [stem, `mock://${stem}.wav`])),
   created_at: new Date().toISOString(),
 }
@@ -75,6 +77,16 @@ const track: Track = {
   analysis,
   stem_sets: { full: stems },
 }
+const featuredVideo: YouTubeVideo = FEATURED_VIDEO
+const featuredTrack: Track = {
+  ...track,
+  id: FEATURED_VIDEO.id,
+  title: FEATURED_VIDEO.title,
+  artist: FEATURED_VIDEO.channel,
+  source_kind: 'url',
+  source_url: FEATURED_VIDEO.url,
+  track_dir: 'mock://featured-track',
+}
 
 export function installBrowserMock(): void {
   if (window.remixer) return
@@ -83,20 +95,29 @@ export function installBrowserMock(): void {
       installed: true,
       ready: true,
       python: 'mock',
+      platform: 'darwin',
+      arch: 'arm64',
       details: {
         python: '3.11', ready: true, ffmpeg: 'mock', ffprobe: 'mock',
-        cuda: { available: true, device: 'NVIDIA GeForce RTX 3080', vram_gb: 10 },
+        cuda: { available: false, device: null, vram_gb: null },
+        mps: { available: true, built: true },
+        mlx: { available: true, device: 'Apple Silicon GPU' },
+        separation: { backend: 'mlx', device: 'mps', status: 'preferred' as const },
         packages: {},
       },
     }),
     installEngine: async () => ({ ok: true }),
     chooseAudioFile: async () => null,
     runWorker: async <T,>(request: Record<string, unknown>) => {
-      if (request.command === 'list_tracks') return [track] as T
+      if (request.command === 'list_tracks') return [track, featuredTrack] as T
       if (request.command === 'waveform') return waveform as T
       if (request.command === 'analyze') return analysis as T
       if (request.command === 'separate') return stems as T
       if (request.command === 'render_clips') return { paths: request.files || {}, directory: 'mock://clips' } as T
+      if (request.command === 'search_youtube') return [featuredVideo] as T
+      if (request.command === 'storage_status' || request.command === 'cleanup_storage' || request.command === 'set_storage_limit' || request.command === 'offload_project') return { limit_mb: 5120, minimum_limit_mb: 500, used_bytes: 192418092, projects: [{ id: featuredTrack.id, title: featuredTrack.title, track_dir: featuredTrack.track_dir, updated_at: featuredTrack.updated_at, size_bytes: 64139364, offloaded: false, tutorial: true }, { id: track.id, title: track.title, track_dir: track.track_dir, updated_at: track.updated_at, size_bytes: 128278728, offloaded: false, tutorial: false }] } as T
+      if (request.command === 'restore_track') return track as T
+      if (request.command === 'download') return featuredTrack as T
       return track as T
     },
     stopWorker: async () => ({ ok: true }),

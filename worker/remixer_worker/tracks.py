@@ -55,6 +55,7 @@ def import_local(file_value: str, report) -> dict[str, Any]:
         "updated_at": now,
         "analysis": existing.get("analysis"),
         "stem_sets": existing.get("stem_sets", {}),
+        "offloaded": False,
     }
     write_manifest(track_dir, payload)
     report("import", 1.0, "Track ready")
@@ -149,6 +150,7 @@ def download_url(url: str, report) -> dict[str, Any]:
         "updated_at": now,
         "analysis": existing.get("analysis"),
         "stem_sets": existing.get("stem_sets", {}),
+        "offloaded": False,
     }
     write_manifest(track_dir, payload)
     report("download", 1.0, "Track ready")
@@ -164,3 +166,27 @@ def list_tracks() -> list[dict[str, Any]]:
             continue
     return sorted(tracks, key=lambda item: item.get("updated_at", ""), reverse=True)
 
+
+def restore_track(track_dir_value: str, report) -> dict[str, Any]:
+    track_dir = Path(track_dir_value).resolve()
+    if track_dir.parent != tracks_root().resolve():
+        raise ValueError("Project is outside the Remixer track library.")
+    manifest = read_manifest(track_dir)
+    if not manifest.get("offloaded") and Path(str(manifest.get("working_path") or "")).is_file():
+        return manifest
+    if manifest.get("source_kind") == "url" and manifest.get("source_url"):
+        restored = download_url(str(manifest["source_url"]), report)
+    else:
+        source = Path(str(manifest.get("source_path") or "")).expanduser()
+        if not source.is_file():
+            raise FileNotFoundError("The original local audio file is no longer available. Import it again to restore this project.")
+        working = track_dir / "working.wav"
+        report("restore", 0.25, "Restoring the working audio")
+        convert_to_working_wav(source, working)
+        restored = {**manifest, "working_path": str(working), "offloaded": False, "stem_sets": {}, "updated_at": utc_now()}
+        write_manifest(track_dir, restored)
+    restored["offloaded"] = False
+    restored["stem_sets"] = {}
+    write_manifest(Path(restored["track_dir"]), restored)
+    report("restore", 1.0, "Project audio restored")
+    return restored

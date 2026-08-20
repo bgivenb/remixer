@@ -32,9 +32,32 @@ export interface PythonLaunch {
   args: string[]
 }
 
+const MAC_TOOL_PATHS = [
+  '/opt/homebrew/bin',
+  '/opt/homebrew/sbin',
+  '/usr/local/bin',
+  '/usr/local/sbin',
+  '/opt/local/bin',
+  '/usr/bin',
+  '/bin',
+  '/usr/sbin',
+  '/sbin',
+]
+
+export function workerEnvironment(base: NodeJS.ProcessEnv = process.env): NodeJS.ProcessEnv {
+  if (process.platform !== 'darwin') return { ...base }
+  const existing = (base.PATH || '').split(path.delimiter).filter(Boolean)
+  return {
+    ...base,
+    PATH: [...new Set([...MAC_TOOL_PATHS, ...existing])].join(path.delimiter),
+  }
+}
+
 export function resolvePython(projectRoot: string, appDataRoot: string): PythonLaunch | null {
   const candidates = [
     process.env.REMIXER_PYTHON,
+    path.join(appDataRoot, 'engine', '.venv', 'bin', 'python'),
+    path.join(projectRoot, '.venv', 'bin', 'python'),
     path.join(appDataRoot, 'engine', '.venv', 'Scripts', 'python.exe'),
     path.join(projectRoot, '.venv', 'Scripts', 'python.exe'),
   ].filter((candidate): candidate is string => Boolean(candidate))
@@ -56,6 +79,7 @@ export class WorkerClient extends EventEmitter {
     private readonly workerRoot: string,
     private readonly projectRoot: string,
     private readonly appDataRoot: string,
+    private readonly tutorialArchive?: string,
   ) {
     super()
   }
@@ -84,10 +108,11 @@ export class WorkerClient extends EventEmitter {
     this.process = spawn(this.launch.executable, args, {
       cwd: this.workerRoot,
       env: {
-        ...process.env,
+        ...workerEnvironment(),
         PYTHONPATH: this.workerRoot,
         PYTHONUTF8: '1',
         REMIXER_DATA_DIR: path.join(this.appDataRoot, 'data'),
+        REMIXER_TUTORIAL_ARCHIVE: this.tutorialArchive,
       },
       windowsHide: true,
       stdio: ['pipe', 'pipe', 'pipe'],
@@ -182,4 +207,3 @@ export class WorkerClient extends EventEmitter {
     this.emit('message', { type: 'error', error: error.message } satisfies WorkerMessage)
   }
 }
-
