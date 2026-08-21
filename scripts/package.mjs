@@ -28,10 +28,8 @@ async function sha256(file) {
   return createHash('sha256').update(await readFile(file)).digest('hex')
 }
 
-async function writeChecksums() {
-  const artifacts = (await readdir(destination))
-    .filter((artifact) => /^(?:Remixer.+\.(?:exe|dmg|zip)|Down-So-Bad-Tutorial-Project\.zip)$/i.test(artifact))
-    .sort((left, right) => left.localeCompare(right))
+async function writeChecksums(artifacts) {
+  artifacts = [...new Set(artifacts)].sort((left, right) => left.localeCompare(right))
   const lines = []
   for (const artifact of artifacts) {
     lines.push(`${await sha256(path.join(destination, artifact))}  ${artifact}`)
@@ -41,6 +39,11 @@ async function writeChecksums() {
 }
 
 try {
+  if (process.platform === 'darwin') {
+    await run(process.execPath, [path.join(projectRoot, 'scripts', 'prepare-mac-runtime.mjs')])
+  } else if (process.platform === 'win32') {
+    await run(process.execPath, [path.join(projectRoot, 'scripts', 'prepare-windows-runtime.mjs')])
+  }
   const builderArgs = [
     path.join(projectRoot, 'node_modules', 'electron-builder', 'cli.js'),
   ]
@@ -54,16 +57,19 @@ try {
   builderArgs.push(`--config.directories.output=${temporaryOutput}`)
   await run(process.execPath, builderArgs)
   await mkdir(destination, { recursive: true })
+  const checksumArtifacts = []
   const artifacts = await readdir(temporaryOutput)
   for (const artifact of artifacts) {
     if (!/\.(exe|dmg|zip|blockmap|yml)$/i.test(artifact)) continue
     await copyFile(path.join(temporaryOutput, artifact), path.join(destination, artifact))
     console.log(`Copied release artifact: ${artifact}`)
+    if (/\.(?:exe|dmg|zip)$/i.test(artifact)) checksumArtifacts.push(artifact)
   }
   const tutorialAsset = 'Down-So-Bad-Tutorial-Project.zip'
   await copyFile(path.join(projectRoot, 'build-tools', tutorialAsset), path.join(destination, tutorialAsset))
   console.log(`Copied release artifact: ${tutorialAsset}`)
-  await writeChecksums()
+  checksumArtifacts.push(tutorialAsset)
+  await writeChecksums(checksumArtifacts)
 } finally {
   await rm(temporaryRoot, { recursive: true, force: true })
 }

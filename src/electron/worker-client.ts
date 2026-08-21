@@ -44,12 +44,21 @@ const MAC_TOOL_PATHS = [
   '/sbin',
 ]
 
-export function workerEnvironment(base: NodeJS.ProcessEnv = process.env): NodeJS.ProcessEnv {
-  if (process.platform !== 'darwin') return { ...base }
+export function workerEnvironment(base: NodeJS.ProcessEnv = process.env, appDataRoot?: string): NodeJS.ProcessEnv {
   const existing = (base.PATH || '').split(path.delimiter).filter(Boolean)
+  const privateTools = appDataRoot ? path.join(appDataRoot, 'engine', 'tools') : null
+  const privateToolPaths = privateTools
+    ? (process.platform === 'win32' ? [path.join(privateTools, 'ffmpeg'), privateTools] : [privateTools])
+    : []
+  if (process.platform !== 'darwin') {
+    return {
+      ...base,
+      PATH: [...new Set([...privateToolPaths, ...existing])].join(path.delimiter),
+    }
+  }
   return {
     ...base,
-    PATH: [...new Set([...MAC_TOOL_PATHS, ...existing])].join(path.delimiter),
+    PATH: [...new Set([...privateToolPaths, ...MAC_TOOL_PATHS, ...existing])].join(path.delimiter),
   }
 }
 
@@ -108,7 +117,7 @@ export class WorkerClient extends EventEmitter {
     this.process = spawn(this.launch.executable, args, {
       cwd: this.workerRoot,
       env: {
-        ...workerEnvironment(),
+        ...workerEnvironment(process.env, this.appDataRoot),
         PYTHONPATH: this.workerRoot,
         PYTHONUTF8: '1',
         REMIXER_DATA_DIR: path.join(this.appDataRoot, 'data'),

@@ -1,9 +1,14 @@
-# Remixer 0.1.1 — Windows and Apple Silicon
+# Remixer 0.1.2 — One-click setup on Windows and Mac
 
 Remixer is a Given Peace–styled local producer workstation for finding authorized YouTube audio, detecting musical structure, navigating by chord, separating stems with native hardware acceleration, and moving sample-accurate WAVs into a DAW workflow.
 
 ## Highlights
 
+- One-click Windows and Apple Silicon setup with no package-manager commands, administrator password, or PATH changes.
+- Bundled, checksum-verified platform-native `uv` and LGPL FFmpeg/FFprobe tools.
+- Windows privately installs Python 3.11 and CUDA PyTorch, then verifies the NVIDIA device and core model.
+- The exact reviewed BS-RoFormer source archive ships with Windows, removing any first-run Git dependency.
+- Windows verification is self-contained, forces UTF-8 for model downloads, and removes temporary setup packages when complete.
 - Built-in YouTube player and search, featuring Given Peace — Down So Bad.
 - Permanent Down So Bad default track and mandatory five-step first-run tutorial.
 - Lean 42 MB losslessly compressed base tutorial track; users perform real detection and separation.
@@ -16,15 +21,15 @@ Remixer is a Given Peace–styled local producer workstation for finding authori
 
 ## Downloads
 
-- `Remixer-Setup-0.1.1-x64.exe` — Windows 10/11 x64 NSIS installer.
-- `Remixer-0.1.1-arm64.dmg` — standard Apple Silicon installer image.
-- `Remixer-0.1.1-arm64.zip` — portable Apple Silicon application.
+- `Remixer-Setup-0.1.2-x64.exe` — Windows 10/11 x64 NSIS installer.
+- `Remixer-0.1.2-arm64.dmg` — standard Apple Silicon installer image.
+- `Remixer-0.1.2-arm64.zip` — portable Apple Silicon application.
 - `Down-So-Bad-Tutorial-Project.zip` — reproducible owner-authorized base tutorial asset used by release builds.
 - `SHA256SUMS.txt` — checksums for all release artifacts.
 
 ## Windows first launch
 
-Install `uv`, FFmpeg, and FFprobe on `PATH`, then select **Install audio engine** in Remixer. The one-time setup creates a private Python 3.11 environment, installs CUDA-enabled PyTorch and the analysis stack, verifies the NVIDIA GPU, and downloads the core six-stem model. Allow about 5.2 GB of disk space; the optional HQ-vocal model adds roughly 255 MB on first use.
+Install and open Remixer, then select **Set up Remixer**. Remixer supplies its own verified setup/audio tools and reviewed inference source, privately installs Python 3.11 and CUDA-enabled PyTorch, verifies the NVIDIA GPU, and downloads the core six-stem model. No separate dependency page, developer tools, Git installation, commands, or PATH configuration are required. Allow about 5.5 GB of disk space; the optional HQ-vocal model adds roughly 255 MB on first use.
 
 The Windows application installs for the current user, creates Desktop and Start Menu shortcuts, and keeps its engine, model cache, and project library under `%LOCALAPPDATA%\Remixer`.
 
@@ -32,7 +37,7 @@ The Windows installer is unsigned because no Authenticode certificate was provid
 
 ## macOS first launch
 
-Install Homebrew `uv` and FFmpeg first with `brew install uv ffmpeg`. Remixer's one-time setup installs its private Python/ML engine and downloads the core six-stem model. Expect roughly 1.6 GB for that setup. The optional HQ-vocal model downloads only on first use.
+Drag Remixer to Applications, open it, and select **Set up Remixer**. Remixer supplies its own verified setup/audio tools, then installs its private Python/ML engine and downloads the core six-stem model. No Homebrew or Terminal work is required. Expect roughly 1.6 GB for that setup. The optional HQ-vocal model downloads only on first use.
 
 The Mac build is unsigned because no Apple Developer ID was provided. After attempting to open it, use **System Settings → Privacy & Security → Open Anyway**. A normal trusted public release requires Apple Developer Program membership, Developer ID signing, and notarization.
 

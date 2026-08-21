@@ -6,27 +6,39 @@ script_root="$(cd "$(dirname "$0")" && pwd)"
 worker_root="$(cd "${script_root}/../worker" && pwd)"
 venv_path="${install_root}/.venv"
 python_path="${venv_path}/bin/python"
+tools_path="${install_root}/tools"
+bundled_tools_dir="${REMIXER_BUNDLED_TOOLS_DIR:-}"
 
-export PATH="/opt/homebrew/bin:/opt/homebrew/sbin:/usr/local/bin:/usr/local/sbin:/opt/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:${PATH:-}"
+export PATH="${tools_path}:/usr/bin:/bin:/usr/sbin:/sbin:${PATH:-}"
 
 if [[ ! -d "${worker_root}" ]]; then
   echo "Worker sources were not found at ${worker_root}" >&2
   exit 1
 fi
 
-uv_path="$(command -v uv || true)"
-if [[ -z "${uv_path}" ]]; then
-  echo "uv is required. Install it with 'brew install uv', then try again." >&2
-  exit 1
-fi
-if ! command -v ffmpeg >/dev/null 2>&1 || ! command -v ffprobe >/dev/null 2>&1; then
-  echo "FFmpeg and FFprobe are required. Install them with 'brew install ffmpeg', then try again." >&2
-  exit 1
-fi
-
 mkdir -p "${install_root}"
+export UV_PYTHON_INSTALL_DIR="${install_root}/python"
+export UV_PYTHON_INSTALL_BIN=0
+export UV_CACHE_DIR="${install_root}/.uv-cache"
 
-echo 'Installing the managed arm64 Python 3.11 runtime...'
+if [[ -n "${bundled_tools_dir}" && -x "${bundled_tools_dir}/uv" && -x "${bundled_tools_dir}/ffmpeg" && -x "${bundled_tools_dir}/ffprobe" && -x "${bundled_tools_dir}/realpath" ]]; then
+  echo 'Installing Remixer private setup and audio tools...'
+  mkdir -p "${tools_path}"
+  install -m 755 "${bundled_tools_dir}/ffmpeg" "${tools_path}/ffmpeg"
+  install -m 755 "${bundled_tools_dir}/ffprobe" "${tools_path}/ffprobe"
+  install -m 755 "${bundled_tools_dir}/realpath" "${tools_path}/realpath"
+  uv_path="${bundled_tools_dir}/uv"
+else
+  export PATH="/opt/homebrew/bin:/opt/homebrew/sbin:/usr/local/bin:/usr/local/sbin:/opt/local/bin:${PATH}"
+  uv_path="$(command -v uv || true)"
+  if [[ -z "${uv_path}" ]] || ! command -v ffmpeg >/dev/null 2>&1 || ! command -v ffprobe >/dev/null 2>&1; then
+    echo 'The packaged setup tools are missing. Reinstall Remixer and try again.' >&2
+    exit 1
+  fi
+  echo 'Using developer-provided setup tools...'
+fi
+
+echo 'Downloading the private Python 3.11 runtime...'
 "${uv_path}" python install 3.11
 
 if [[ ! -x "${python_path}" ]]; then
