@@ -37,6 +37,9 @@ const tutorialArchive = app.isPackaged
 const bundledMacTools = app.isPackaged
   ? path.join(process.resourcesPath, 'tools', 'macos-arm64')
   : path.join(projectRoot, 'build-tools', 'mac-runtime')
+const bundledWindowsTools = app.isPackaged
+  ? path.join(process.resourcesPath, 'tools', 'windows-x64')
+  : path.join(projectRoot, 'build-tools', 'windows-runtime')
 
 let mainWindow: BrowserWindow | null = null
 let worker: WorkerClient | null = null
@@ -56,6 +59,20 @@ function getWorker(): WorkerClient {
     })
   }
   return worker
+}
+
+function privateAudioToolsReady(): boolean {
+  if (!app.isPackaged) return true
+  const toolsRoot = path.join(appDataRoot, 'engine', 'tools')
+  if (process.platform === 'win32') {
+    return fs.existsSync(path.join(toolsRoot, 'ffmpeg', 'ffmpeg.exe'))
+      && fs.existsSync(path.join(toolsRoot, 'ffmpeg', 'ffprobe.exe'))
+  }
+  if (process.platform === 'darwin') {
+    return fs.existsSync(path.join(toolsRoot, 'ffmpeg'))
+      && fs.existsSync(path.join(toolsRoot, 'ffprobe'))
+  }
+  return true
 }
 
 function createWindow(): void {
@@ -189,7 +206,11 @@ async function installEngine(): Promise<{ ok: true }> {
   }
 
   await new Promise<void>((resolve, reject) => {
-    const executable = isWindows ? 'powershell.exe' : '/bin/bash'
+    const windowsRoot = process.env.SystemRoot || process.env.WINDIR || 'C:\\Windows'
+    const packagedTools = isWindows ? bundledWindowsTools : bundledMacTools
+    const executable = isWindows
+      ? path.join(windowsRoot, 'System32', 'WindowsPowerShell', 'v1.0', 'powershell.exe')
+      : '/bin/bash'
     const args = isWindows
       ? ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', script, '-InstallRoot', path.join(appDataRoot, 'engine')]
       : [script, path.join(appDataRoot, 'engine')]
@@ -197,7 +218,7 @@ async function installEngine(): Promise<{ ok: true }> {
       cwd: projectRoot,
       env: {
         ...workerEnvironment(process.env, appDataRoot),
-        ...(process.platform === 'darwin' ? { REMIXER_BUNDLED_TOOLS_DIR: bundledMacTools } : {}),
+        REMIXER_BUNDLED_TOOLS_DIR: packagedTools,
       },
       windowsHide: true,
     })
@@ -261,6 +282,16 @@ app.whenReady().then(async () => {
     const platform = process.platform
     const arch = process.arch
     if (!python) return { installed: false, ready: false, python: null, platform, arch }
+    if (!privateAudioToolsReady()) {
+      return {
+        installed: true,
+        ready: false,
+        python: python.executable,
+        platform,
+        arch,
+        error: 'Remixer needs to install its private audio tools. Select Repair Remixer setup.',
+      }
+    }
     try {
       const result = await getWorker().request({ command: 'health' }, 45_000)
       return { installed: true, ready: true, python: python.executable, platform, arch, details: result.data }

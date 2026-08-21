@@ -47,15 +47,18 @@ const MAC_TOOL_PATHS = [
 export function workerEnvironment(base: NodeJS.ProcessEnv = process.env, appDataRoot?: string): NodeJS.ProcessEnv {
   const existing = (base.PATH || '').split(path.delimiter).filter(Boolean)
   const privateTools = appDataRoot ? path.join(appDataRoot, 'engine', 'tools') : null
+  const privateToolPaths = privateTools
+    ? (process.platform === 'win32' ? [path.join(privateTools, 'ffmpeg'), privateTools] : [privateTools])
+    : []
   if (process.platform !== 'darwin') {
     return {
       ...base,
-      PATH: [...new Set([privateTools, ...existing].filter((entry): entry is string => Boolean(entry)))].join(path.delimiter),
+      PATH: [...new Set([...privateToolPaths, ...existing])].join(path.delimiter),
     }
   }
   return {
     ...base,
-    PATH: [...new Set([privateTools, ...MAC_TOOL_PATHS, ...existing].filter((entry): entry is string => Boolean(entry)))].join(path.delimiter),
+    PATH: [...new Set([...privateToolPaths, ...MAC_TOOL_PATHS, ...existing])].join(path.delimiter),
   }
 }
 

@@ -6,7 +6,7 @@ Remixer is a local Windows and macOS producer workstation for acquiring authoriz
 
 - [Download Remixer 0.1.2 for Apple Silicon (.dmg)](https://github.com/bgivenb/remixer/releases/download/v0.1.2/Remixer-0.1.2-arm64.dmg)
 - [Download the portable Mac build (.zip)](https://github.com/bgivenb/remixer/releases/download/v0.1.2/Remixer-0.1.2-arm64.zip)
-- [Download Remixer 0.1.1 for Windows (.exe)](https://github.com/bgivenb/remixer/releases/download/v0.1.1/Remixer-Setup-0.1.1-x64.exe)
+- [Download Remixer 0.1.2 for Windows (.exe)](https://github.com/bgivenb/remixer/releases/download/v0.1.2/Remixer-Setup-0.1.2-x64.exe)
 - [View all releases](https://github.com/bgivenb/remixer/releases)
 
 The current Mac build is unsigned. After the first launch attempt, macOS may require **System Settings → Privacy & Security → Open Anyway**. A normal trusted Developer ID signature and notarization requires Apple Developer Program membership; see the distribution note below.
@@ -24,7 +24,7 @@ Settings includes a project-audio budget with a 5 GB default and a 500 MB minimu
 The supported targets are Windows 10/11 on x64 with an NVIDIA CUDA GPU and Apple Silicon (`arm64`) on macOS 12 or newer. Build artifacts are written to `release/`:
 
 ```text
-release/Remixer-Setup-0.1.1-x64.exe
+release/Remixer-Setup-0.1.2-x64.exe
 release/Remixer-0.1.2-arm64.dmg
 release/Remixer-0.1.2-arm64.zip
 ```
@@ -61,11 +61,11 @@ Approximate Apple Silicon footprint after first setup:
 
 With both models and the expanded base tutorial installed, the fixed baseline is roughly 2.4 GB before user projects. The 5 GB storage preference applies only to growing project audio, not the shared engine or model cache.
 
-The verified Windows footprint is approximately 4.5 GB for the private CUDA engine, 667 MB for the core six-stem model, 255 MB for the optional HQ-vocal model, and 61 MB for the expanded tutorial. Allow about 5.2 GB for first setup or 5.5 GB with both models. The same 5 GB preference applies only to project audio.
+The Windows installer is about 214 MB and includes its own checksum-verified setup/audio tools. Allow about 5.5 GB for private Python, the CUDA engine, private FFmpeg/FFprobe, the core six-stem model, and the expanded tutorial. The optional HQ-vocal model adds roughly 255 MB. The same 5 GB preference applies only to project audio.
 
 ## First launch
 
-On Windows, install `uv`, FFmpeg, and FFprobe on `PATH`, then open Remixer and select **Install audio engine**. The setup creates a private Python 3.11 environment, installs CUDA-enabled PyTorch, verifies the RTX/NVIDIA device, and downloads the core six-stem checkpoint. The optional HQ-vocal model is downloaded on first use.
+On Windows, install and open Remixer, then select **Set up Remixer**. The app includes its own verified x64 `uv`, LGPL FFmpeg/FFprobe tools, and reviewed BS-RoFormer source. It privately installs Python 3.11, CUDA-enabled PyTorch, the analysis stack, and the core six-stem checkpoint. No package manager, developer tools, Git installation, administrator password, commands, or PATH changes are required. Setup requires an internet connection; the optional HQ-vocal model is downloaded on first use.
 
 On macOS, drag Remixer to Applications, open it, and select **Set up Remixer**. The app includes its own verified Apple Silicon `uv`, FFmpeg, FFprobe, and macOS 12 compatibility helper. It privately installs Python 3.11, verifies MLX and Torch MPS, and downloads/verifies the core six-stem checkpoint. No Homebrew, Terminal commands, administrator password, or PATH changes are required. The setup explains the roughly 1.6 GB download before it starts; the optional HQ-vocal model remains an on-demand first-use download.
 
@@ -107,7 +107,9 @@ Windows:
 
 ```powershell
 npm ci
-powershell -ExecutionPolicy Bypass -File .\scripts\setup-engine.ps1
+npm run build:windows-runtime
+$runtime = (Resolve-Path .\build-tools\windows-runtime).Path
+powershell -ExecutionPolicy Bypass -File .\scripts\setup-engine.ps1 -BundledToolsRoot $runtime
 npm run build:tutorial
 npm run typecheck
 npm test
@@ -138,7 +140,7 @@ npm run package
 
 `build:tutorial` uses the owner-authorized base track at the normal Remixer app-data path. A release builder can override it with `REMIXER_TUTORIAL_SOURCE`. When no local source/archive exists, the script downloads the pinned `v0.1.1` release asset and verifies its SHA-256 before packaging. The generated archive stays in `build-tools/` and is intentionally not committed as source.
 
-`scripts/package.mjs` prepares and verifies the pinned private Mac setup tools before selecting DMG/ZIP on macOS, and retains the existing NSIS path on Windows. Windows CUDA setup and `CF_HDROP` clipboard support remain behind platform dispatch.
+`scripts/package.mjs` prepares and verifies the platform's pinned private setup tools before selecting DMG/ZIP on macOS or NSIS on Windows. Windows CUDA setup and `CF_HDROP` clipboard support remain behind platform dispatch. The Windows runtime carries archive-level and per-file SHA-256 manifests and installs the reviewed BS-RoFormer source locally, so setup never depends on Git.
 
 ## Responsible use
 

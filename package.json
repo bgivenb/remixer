@@ -13,6 +13,7 @@
     "build:renderer": "vite build",
     "build:icon": "node scripts/build-icon.mjs",
     "build:mac-runtime": "node scripts/prepare-mac-runtime.mjs",
+    "build:windows-runtime": "node scripts/prepare-windows-runtime.mjs",
     "build:mac-helper": "node scripts/build-mac-helper.mjs",
     "build": "npm run build:electron && npm run build:renderer",
     "build:tutorial": "node scripts/prepare-tutorial-project.mjs",
@@ -72,7 +73,13 @@
     "win": {
       "target": ["nsis"],
       "icon": "build-tools/remixer-icon.png",
-      "artifactName": "${productName}-Setup-${version}-${arch}.${ext}"
+      "artifactName": "${productName}-Setup-${version}-${arch}.${ext}",
+      "extraResources": [
+        {
+          "from": "build-tools/windows-runtime",
+          "to": "tools/windows-x64"
+        }
+      ]
     },
     "mac": {
       "category": "public.app-category.music",

@@ -41,6 +41,8 @@ async function writeChecksums(artifacts) {
 try {
   if (process.platform === 'darwin') {
     await run(process.execPath, [path.join(projectRoot, 'scripts', 'prepare-mac-runtime.mjs')])
+  } else if (process.platform === 'win32') {
+    await run(process.execPath, [path.join(projectRoot, 'scripts', 'prepare-windows-runtime.mjs')])
   }
   const builderArgs = [
     path.join(projectRoot, 'node_modules', 'electron-builder', 'cli.js'),
