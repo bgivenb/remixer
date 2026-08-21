@@ -1,6 +1,6 @@
 {
   "name": "remixer",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "private": true,
   "author": "Given",
   "description": "Local producer workstation for audio analysis and AI stem separation",
@@ -12,6 +12,7 @@
     "build:electron": "tsc -p tsconfig.electron.json",
     "build:renderer": "vite build",
     "build:icon": "node scripts/build-icon.mjs",
+    "build:mac-runtime": "node scripts/prepare-mac-runtime.mjs",
     "build:mac-helper": "node scripts/build-mac-helper.mjs",
     "build": "npm run build:electron && npm run build:renderer",
     "build:tutorial": "node scripts/prepare-tutorial-project.mjs",
@@ -86,6 +87,10 @@
         {
           "from": "build-tools/remixer-file-clipboard",
           "to": "helpers/remixer-file-clipboard"
+        },
+        {
+          "from": "build-tools/mac-runtime",
+          "to": "tools/macos-arm64"
         }
       ]
     },

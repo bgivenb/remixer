@@ -34,6 +34,9 @@ const macClipboardHelper = app.isPackaged
 const tutorialArchive = app.isPackaged
   ? path.join(process.resourcesPath, 'tutorial', 'Down-So-Bad-Tutorial-Project.zip')
   : path.join(projectRoot, 'build-tools', 'Down-So-Bad-Tutorial-Project.zip')
+const bundledMacTools = app.isPackaged
+  ? path.join(process.resourcesPath, 'tools', 'macos-arm64')
+  : path.join(projectRoot, 'build-tools', 'mac-runtime')
 
 let mainWindow: BrowserWindow | null = null
 let worker: WorkerClient | null = null
@@ -192,7 +195,10 @@ async function installEngine(): Promise<{ ok: true }> {
       : [script, path.join(appDataRoot, 'engine')]
     const child = spawn(executable, args, {
       cwd: projectRoot,
-      env: workerEnvironment(),
+      env: {
+        ...workerEnvironment(process.env, appDataRoot),
+        ...(process.platform === 'darwin' ? { REMIXER_BUNDLED_TOOLS_DIR: bundledMacTools } : {}),
+      },
       windowsHide: true,
     })
     const relay = (chunk: Buffer) => mainWindow?.webContents.send('engine:install-message', chunk.toString())

@@ -4,9 +4,9 @@ Remixer is a local Windows and macOS producer workstation for acquiring authoriz
 
 ## Download
 
-- [Download Remixer for Apple Silicon (.dmg)](https://github.com/bgivenb/remixer/releases/latest/download/Remixer-0.1.1-arm64.dmg)
-- [Download the portable Mac build (.zip)](https://github.com/bgivenb/remixer/releases/latest/download/Remixer-0.1.1-arm64.zip)
-- [Download Remixer for Windows (.exe)](https://github.com/bgivenb/remixer/releases/latest/download/Remixer-Setup-0.1.1-x64.exe)
+- [Download Remixer 0.1.2 for Apple Silicon (.dmg)](https://github.com/bgivenb/remixer/releases/download/v0.1.2/Remixer-0.1.2-arm64.dmg)
+- [Download the portable Mac build (.zip)](https://github.com/bgivenb/remixer/releases/download/v0.1.2/Remixer-0.1.2-arm64.zip)
+- [Download Remixer 0.1.1 for Windows (.exe)](https://github.com/bgivenb/remixer/releases/download/v0.1.1/Remixer-Setup-0.1.1-x64.exe)
 - [View all releases](https://github.com/bgivenb/remixer/releases)
 
 The current Mac build is unsigned. After the first launch attempt, macOS may require **System Settings → Privacy & Security → Open Anyway**. A normal trusted Developer ID signature and notarization requires Apple Developer Program membership; see the distribution note below.
@@ -25,8 +25,8 @@ The supported targets are Windows 10/11 on x64 with an NVIDIA CUDA GPU and Apple
 
 ```text
 release/Remixer-Setup-0.1.1-x64.exe
-release/Remixer-0.1.1-arm64.dmg
-release/Remixer-0.1.1-arm64.zip
+release/Remixer-0.1.2-arm64.dmg
+release/Remixer-0.1.2-arm64.zip
 ```
 
 The completed Windows release checklist and measured results are recorded in [WINDOWS_VALIDATION.md](WINDOWS_VALIDATION.md).
@@ -53,13 +53,13 @@ There is no legitimate no-fee Developer ID/notarization route for unrestricted p
 
 Approximate Apple Silicon footprint after first setup:
 
-- Download package with the bundled base tutorial track: about 159 MB compressed; the installed `.app` is about 347 MB.
-- Private Python/ML audio engine: about 924 MB.
+- Download package with the bundled tutorial and private setup/audio tools: about 208 MB compressed; the installed `.app` is about 433 MB.
+- Private Python/ML audio engine plus the copied FFmpeg/FFprobe tools: about 1.0 GB.
 - Core six-stem model installed during setup: about 667 MB on disk (~699 MB advertised download).
 - Optional HQ-vocal model: about 255 MB on disk (~268 MB advertised download).
 - Expanded Down So Bad base track: about 61 MB.
 
-With both models and the expanded base tutorial installed, the fixed baseline is roughly 2.2 GB before user projects. The 5 GB storage preference applies only to growing project audio, not the shared engine or model cache.
+With both models and the expanded base tutorial installed, the fixed baseline is roughly 2.4 GB before user projects. The 5 GB storage preference applies only to growing project audio, not the shared engine or model cache.
 
 The verified Windows footprint is approximately 4.5 GB for the private CUDA engine, 667 MB for the core six-stem model, 255 MB for the optional HQ-vocal model, and 61 MB for the expanded tutorial. Allow about 5.2 GB for first setup or 5.5 GB with both models. The same 5 GB preference applies only to project audio.
 
@@ -67,13 +67,7 @@ The verified Windows footprint is approximately 4.5 GB for the private CUDA engi
 
 On Windows, install `uv`, FFmpeg, and FFprobe on `PATH`, then open Remixer and select **Install audio engine**. The setup creates a private Python 3.11 environment, installs CUDA-enabled PyTorch, verifies the RTX/NVIDIA device, and downloads the core six-stem checkpoint. The optional HQ-vocal model is downloaded on first use.
 
-On macOS, install Homebrew `uv` and FFmpeg once:
-
-```bash
-brew install uv ffmpeg
-```
-
-Open Remixer and select **Install audio engine**. The app finds Homebrew tools even when it is launched from Finder, installs an arm64 Python 3.11 environment, verifies MLX, Torch MPS, FFmpeg, and FFprobe, and downloads/verifies the core six-stem checkpoint. The optional HQ-vocal model remains an on-demand first-use download.
+On macOS, drag Remixer to Applications, open it, and select **Set up Remixer**. The app includes its own verified Apple Silicon `uv`, FFmpeg, FFprobe, and macOS 12 compatibility helper. It privately installs Python 3.11, verifies MLX and Torch MPS, and downloads/verifies the core six-stem checkpoint. No Homebrew, Terminal commands, administrator password, or PATH changes are required. The setup explains the roughly 1.6 GB download before it starts; the optional HQ-vocal model remains an on-demand first-use download.
 
 ## Workflow
 
@@ -125,11 +119,11 @@ npm run dev
 macOS:
 
 ```bash
-brew install uv ffmpeg
 npm ci
 npm run build:mac-helper
+npm run build:mac-runtime
 npm run build:tutorial
-./scripts/setup-engine.sh "$HOME/Library/Application Support/Remixer/engine"
+REMIXER_BUNDLED_TOOLS_DIR="$PWD/build-tools/mac-runtime" ./scripts/setup-engine.sh "$HOME/Library/Application Support/Remixer/engine"
 npm run typecheck
 npm test
 PYTHONPATH="$PWD/worker" "$HOME/Library/Application Support/Remixer/engine/.venv/bin/python" -m pytest worker/tests -q
@@ -144,7 +138,7 @@ npm run package
 
 `build:tutorial` uses the owner-authorized base track at the normal Remixer app-data path. A release builder can override it with `REMIXER_TUTORIAL_SOURCE`. When no local source/archive exists, the script downloads the pinned `v0.1.1` release asset and verifies its SHA-256 before packaging. The generated archive stays in `build-tools/` and is intentionally not committed as source.
 
-`scripts/package.mjs` selects DMG/ZIP on macOS and retains the existing NSIS path on Windows. Windows CUDA setup and `CF_HDROP` clipboard support remain behind platform dispatch.
+`scripts/package.mjs` prepares and verifies the pinned private Mac setup tools before selecting DMG/ZIP on macOS, and retains the existing NSIS path on Windows. Windows CUDA setup and `CF_HDROP` clipboard support remain behind platform dispatch.
 
 ## Responsible use
 
