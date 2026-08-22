@@ -2,7 +2,7 @@
 
 ## What this handoff contains
 
-The macOS port is complete and the shared application now includes seven product changes that should be carried into the next Windows build:
+The macOS port is complete and the shared application now includes eight product changes that should be carried into the next Windows build:
 
 1. A whole-app Given Peace visual system based on [givenpeace.com](https://www.givenpeace.com/): monochrome surfaces, condensed uppercase headings, hard borders, editorial spacing, and black media panels.
 2. An in-app YouTube player and search browser. The default featured example is [Given Peace — Down So Bad (Official Music Video)](https://www.youtube.com/watch?v=JR2zel8dJts), ID `JR2zel8dJts`, and a selected result can be sent directly to the existing Remixer download workflow.
@@ -13,6 +13,7 @@ The macOS port is complete and the shared application now includes seven product
 5. One-click first-run setup with no separate setup page, dependency link, package-manager command, or manual PATH configuration. Mac v0.1.2 ships verified private `uv`, FFmpeg, and FFprobe tools and installs its private Python engine/model after the user clicks **Set up Remixer**. The next Windows build must provide the same product experience with Windows-native verified tools while preserving its CUDA-specific engine path.
 6. A welcome modal on every normal app launch after setup/onboarding. It uses the approved Given Peace support copy, links to the canonical Beatport artist page at `https://www.beatport.com/artist/given-peace/1153686`, keeps the Beatport action secondary, and places a larger **Continue** button directly below it.
 7. The tutorial always exposes its top-right close button, including before completion. Closing returns to the app immediately without marking the tutorial complete, so an incomplete walkthrough may appear again on the next launch.
+8. Remixer uses the exact favicon declared by `givenpeace.com` as its header logo and application icon. The pinned 300×300 RGBA PNG is stored as `assets/given-peace-favicon.base64` with source SHA-256 `de165817dd3665ccb43f7afbe3400a80bd2595a97cf0be4079320333040c50b7`; `scripts/build-icon.mjs` verifies it and deterministically creates the 512×512 package icon required by Electron Builder.
 
 The Mac work preserves the existing Windows platform branches for CUDA setup, native `CF_HDROP` file clipboard behavior, NSIS packaging, and PowerShell engine installation.
 
@@ -27,6 +28,7 @@ The Mac work preserves the existing Windows platform branches for CUDA setup, na
 - `src/renderer/featured.ts` — single source of truth for the default video plus featured-track recognition/pinning.
 - `src/renderer/components/Tutorial.tsx` and `HelpCenter.tsx` — first-run walkthrough with an always-available close control plus persistent help reference.
 - `src/renderer/components/WelcomeSupport.tsx` — launch welcome, canonical Beatport action, and prominent Continue control.
+- `assets/given-peace-favicon.base64`, `src/renderer/App.tsx`, and `scripts/build-icon.mjs` — exact Given Peace favicon source, header rendering, checksum verification, and cross-platform 512×512 package-icon generation.
 - `scripts/prepare-tutorial-project.mjs` and `worker/remixer_worker/tutorial.py` — lossless tutorial archive preparation and safe local installation.
 - `worker/remixer_worker/storage.py` and `src/renderer/components/StorageSettings.tsx` — 5 GB project-audio budget, oldest-inactive offloading, retained lightweight history, manual offload, and source restoration.
 - `src/electron/main/main.ts` — packaged desktop-player HTTP referrer identity in addition to the existing platform/lifecycle changes.
@@ -64,6 +66,7 @@ Run these on the actual Windows target after merging:
 12. On a clean Windows user profile with no `uv`, FFmpeg, or FFprobe on `PATH`, open the packaged app and complete setup entirely through the Remixer UI. Confirm the private tools, Python/CUDA engine, and core model are installed automatically; then complete analysis and separation. The app and website must not send users to a separate dependency-setup link.
 13. Complete setup/onboarding and confirm the Given Peace welcome appears on every new app launch. Verify the exact approved copy, the canonical Beatport URL, the secondary Beatport button, and the larger **Continue** button beneath it. Continue must dismiss the modal without reopening it during the same renderer session.
 14. With the tutorial incomplete, confirm its top-right close button is visible and immediately returns to the workspace. Closing must not mark the walkthrough complete; relaunching may present the unfinished tutorial again, followed by the welcome when onboarding is no longer covering it.
+15. Confirm the Given Peace favicon is visible in the app header and the installed application/shortcut icon. Run `npm run build:icon`, verify a 512×512 RGBA PNG is produced, and inspect the NSIS package to ensure the same mark is used on Windows rather than the previous waveform icon.
 
 yt-dlp search does not require an API key. It produced a benign warning about the lack of a supported JavaScript runtime on the tested Mac but returned correct search metadata. If a future yt-dlp release requires a runtime for specific extraction paths on Windows, configure a supported runtime through the normal engine installation rather than embedding credentials or scraping a separate service.
 
@@ -80,12 +83,12 @@ Important: packaged Electron renderers load from `file://`, which omits the HTTP
 - Real six-stem MLX/MPS smoke: all 7 files contained exactly 88,200 frames.
 - Real Leap XE MLX/MPS smoke: both output files contained exactly 88,200 frames.
 - Leap XE model chunk alignment remains `881559 -> 881152`.
-- Renderer tests: 8 passed.
+- Renderer tests: 9 passed.
 - Python tests: 11 passed.
 - TypeScript typecheck and Vite/Electron production builds passed.
 - Live YouTube search returned the official `JR2zel8dJts` result first.
 - Live browser validation confirmed the real YouTube embed, search/result controls, progression-row chord seek, timeline chord seek, and automatic active-chord advancement.
-- App menu, close/reopen, quit, engine discovery, packaged-resource paths, welcome layout, and prominent Continue dismissal were exercised from the application. The always-available tutorial close control is covered by a renderer regression test.
+- App menu, close/reopen, quit, engine discovery, packaged-resource paths, welcome layout, prominent Continue dismissal, and the Given Peace favicon header logo were exercised from the application. The always-available tutorial close control is covered by a renderer regression test. Electron Builder also produced a valid 512×512 macOS `.icns` from the favicon-derived package icon.
 
 The local Mac package is intentionally unsigned. Public distribution still requires the owner's Apple Developer ID signing identity, hardened runtime, notarization, and stapling. Model weights remain runtime downloads and are not bundled into routine UI releases.
 

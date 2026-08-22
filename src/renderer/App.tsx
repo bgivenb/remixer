@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
-  AudioLines,
   Clipboard,
   ClipboardCopy,
   Cpu,
@@ -21,6 +20,7 @@ import {
   Square,
   WandSparkles,
 } from 'lucide-react'
+import givenPeaceFavicon from '../../assets/given-peace-favicon.base64?raw'
 import { EngineSetup } from './components/EngineSetup'
 import { StemRack } from './components/StemRack'
 import { WaveformEditor } from './components/WaveformEditor'
@@ -40,6 +40,7 @@ const ALL_WORKING_KEYS: KeyResult[] = PITCH_NAMES.flatMap((tonic, index) => ([
   { label: `${tonic} Major`, tonic, mode: 'major', confidence: 0, camelot: CAMELOT_MAJOR[index] },
   { label: `${tonic} Minor`, tonic, mode: 'minor', confidence: 0, camelot: CAMELOT_MINOR[index] },
 ]))
+const GIVEN_PEACE_FAVICON = `data:image/png;base64,${givenPeaceFavicon.trim()}`
 
 function App() {
   const [engine, setEngine] = useState<EngineStatus | null>(null)
@@ -414,7 +415,7 @@ function App() {
   return (
     <div className="app-shell">
       <header className="app-header">
-        <div className="brand"><span className="brand-mark"><AudioLines size={21} /></span><div><strong>REMIXER</strong><span>Prepare. Separate. Create.</span></div></div>
+        <div className="brand"><span className="brand-mark"><img src={GIVEN_PEACE_FAVICON} alt="" /></span><div><strong>REMIXER</strong><span>Prepare. Separate. Create.</span></div></div>
         <div className="header-actions"><button onClick={startTutorial}><GraduationCap size={14} /> Tutorial</button><button onClick={() => setHelpOpen(true)}><HelpCircle size={14} /> Help</button><button onClick={() => void openSettings()}><Settings size={14} /> Settings</button><div className="engine-pill"><span className="status-dot" /><Cpu size={14} /> {computeLabel}<span>{engine.details?.cuda.vram_gb ? `${engine.details.cuda.vram_gb} GB` : computeDetail}</span></div></div>
       </header>
 
