@@ -28,6 +28,7 @@ import { YouTubeBrowser } from './components/YouTubeBrowser'
 import { HelpCenter } from './components/HelpCenter'
 import { Tutorial } from './components/Tutorial'
 import { StorageSettings } from './components/StorageSettings'
+import { WelcomeSupport } from './components/WelcomeSupport'
 import type { AnalysisResult, EngineStatus, KeyResult, ProgressState, Selection, StemSet, StorageStatus, Track, WaveformData, WorkerMessage, YouTubeVideo } from './types'
 import { bpmChoices, confidenceLabel, estimatedBars, formatDuration, selectionIsFull } from './lib'
 import { FEATURED_VIDEO, isFeaturedTrack, pinFeaturedTrack } from './featured'
@@ -67,6 +68,7 @@ function App() {
   const [tutorialOpen, setTutorialOpen] = useState(() => window.localStorage.getItem('remixer:tutorial-complete') !== '1')
   const [tutorialStep, setTutorialStep] = useState(0)
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [welcomeOpen, setWelcomeOpen] = useState(true)
   const [storage, setStorage] = useState<StorageStatus | null>(null)
   const [storageBusy, setStorageBusy] = useState(false)
   const featuredBootStarted = useRef(false)
@@ -522,6 +524,7 @@ function App() {
         </div>
       </main>
       {toast ? <div className="toast"><Clipboard size={16} /> {toast}</div> : null}
+      {welcomeOpen && !tutorialOpen ? <WelcomeSupport onContinue={() => setWelcomeOpen(false)} /> : null}
       {helpOpen ? <HelpCenter onClose={() => setHelpOpen(false)} onStartTutorial={startTutorial} /> : null}
       {tutorialOpen ? <Tutorial step={tutorialStep} ready={tutorialTrackReady} required={tutorialRequired} onStepChange={setTutorialStep} onUseTrack={useTutorialTrack} onOriginal={showTutorialOriginal} onChord={jumpTutorialChord} onVocal={previewTutorialVocal} onComplete={completeTutorial} onClose={() => setTutorialOpen(false)} /> : null}
       {settingsOpen && storage ? <StorageSettings status={storage} busy={storageBusy} activeTrackDir={track?.track_dir} onClose={() => setSettingsOpen(false)} onLimit={(limitMb) => void updateStorage({ command: 'set_storage_limit', limit_mb: limitMb })} onCleanup={() => void updateStorage({ command: 'cleanup_storage', force: true })} onOffload={(trackDir) => void updateStorage({ command: 'offload_project', track_dir: trackDir })} /> : null}

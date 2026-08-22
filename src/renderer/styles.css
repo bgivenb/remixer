@@ -242,6 +242,14 @@ button, input, select { color: inherit; }
 .help-grid h2 { margin: 16px 0 8px; font-family: 'League Gothic', Impact, sans-serif; font-size: 29px; font-weight: 400; line-height: 1; text-transform: uppercase; }
 .help-grid p { margin: 0; color: #3f3f3f; font-size: 12px; line-height: 1.55; }
 .modal-footer { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 20px 24px; }
+.support-welcome { width: min(650px, 100%); overflow: hidden; }
+.support-welcome-copy { border-bottom: 1px solid #050505; padding: 38px 40px 32px; }
+.support-welcome-copy h1 { max-width: 540px; margin: 8px 0 24px; font-family: 'League Gothic', Impact, sans-serif; font-size: clamp(50px, 7vw, 72px); font-weight: 400; letter-spacing: -.01em; line-height: .9; text-transform: uppercase; }
+.support-welcome-copy div { display: grid; gap: 12px; }
+.support-welcome-copy div p { max-width: 540px; margin: 0; color: #3f3f3f; font-size: 13px; line-height: 1.65; }
+.support-welcome-actions { display: grid; gap: 10px; padding: 24px 40px 30px; }
+.support-welcome-actions .secondary-button, .support-welcome-actions .primary-button { width: 100%; min-height: 48px; text-decoration: none; }
+.support-welcome-actions .primary-button { min-height: 58px; font-size: 13px; }
 .help-link { text-decoration: none; }
 .tutorial-card { display: grid; grid-template-columns: minmax(250px, .72fr) minmax(420px, 1.28fr); max-width: 900px; overflow: hidden; }
 .tutorial-art { min-height: 520px; display: flex; flex-direction: column; justify-content: flex-end; border-right: 1px solid #fff; background: #050505; color: #fff; padding: 34px; }
@@ -258,7 +266,7 @@ button, input, select { color: inherit; }
 .tutorial-body { max-width: 550px; margin-top: 0; color: #3f3f3f; font-size: 14px; line-height: 1.65; }
 .tutorial-preparing { border: 1px solid #050505; padding: 12px; font: 800 9px/1.2 Inter, sans-serif; letter-spacing: .1em; text-transform: uppercase; }
 .tutorial-actions { display: flex; justify-content: space-between; gap: 12px; margin-top: auto; border-top: 1px solid #050505; padding: 20px 24px; }
-@media (max-width: 900px) { .tutorial-card { grid-template-columns: 1fr; } .tutorial-art { display: none; } .help-grid { grid-template-columns: 1fr; } .help-grid article:nth-child(odd) { border-right: 0; } }
+@media (max-width: 900px) { .tutorial-card { grid-template-columns: 1fr; } .tutorial-art { display: none; } .help-grid { grid-template-columns: 1fr; } .help-grid article:nth-child(odd) { border-right: 0; } .support-welcome-copy, .support-welcome-actions { padding-left: 24px; padding-right: 24px; } }
 .storage-settings { max-width: 860px; }
 .storage-summary { display: grid; grid-template-columns: 1fr auto; align-items: end; gap: 14px 20px; border-bottom: 1px solid #050505; padding: 24px; }
 .storage-figure { display: grid; grid-template-columns: auto auto 1fr; align-items: baseline; gap: 10px; }
