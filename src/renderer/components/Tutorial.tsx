@@ -72,7 +72,7 @@ export function Tutorial({ step, ready, required, onStepChange, onUseTrack, onOr
         <div className="tutorial-copy">
           <header className="modal-heading">
             <div><p className="eyebrow">Tutorial · {String(step + 1).padStart(2, '0')} / {String(STEPS.length).padStart(2, '0')}</p></div>
-            {!required ? <button className="icon-button" onClick={onClose} aria-label="Close tutorial"><X size={18} /></button> : null}
+            <button className="icon-button" onClick={onClose} aria-label="Close tutorial"><X size={18} /></button>
           </header>
           <div className="tutorial-progress" aria-hidden="true">{STEPS.map((_, index) => <i key={index} className={index <= step ? 'active' : ''} />)}</div>
           <p className="eyebrow">{current.eyebrow}</p>

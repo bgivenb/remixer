@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
-  AudioLines,
   Clipboard,
   ClipboardCopy,
   Cpu,
@@ -21,6 +20,7 @@ import {
   Square,
   WandSparkles,
 } from 'lucide-react'
+import givenPeaceFavicon from '../../assets/given-peace-favicon.base64?raw'
 import { EngineSetup } from './components/EngineSetup'
 import { StemRack } from './components/StemRack'
 import { WaveformEditor } from './components/WaveformEditor'
@@ -28,6 +28,7 @@ import { YouTubeBrowser } from './components/YouTubeBrowser'
 import { HelpCenter } from './components/HelpCenter'
 import { Tutorial } from './components/Tutorial'
 import { StorageSettings } from './components/StorageSettings'
+import { WelcomeSupport } from './components/WelcomeSupport'
 import type { AnalysisResult, EngineStatus, KeyResult, ProgressState, Selection, StemSet, StorageStatus, Track, WaveformData, WorkerMessage, YouTubeVideo } from './types'
 import { bpmChoices, confidenceLabel, estimatedBars, formatDuration, selectionIsFull } from './lib'
 import { FEATURED_VIDEO, isFeaturedTrack, pinFeaturedTrack } from './featured'
@@ -39,6 +40,7 @@ const ALL_WORKING_KEYS: KeyResult[] = PITCH_NAMES.flatMap((tonic, index) => ([
   { label: `${tonic} Major`, tonic, mode: 'major', confidence: 0, camelot: CAMELOT_MAJOR[index] },
   { label: `${tonic} Minor`, tonic, mode: 'minor', confidence: 0, camelot: CAMELOT_MINOR[index] },
 ]))
+const GIVEN_PEACE_FAVICON = `data:image/png;base64,${givenPeaceFavicon.trim()}`
 
 function App() {
   const [engine, setEngine] = useState<EngineStatus | null>(null)
@@ -67,6 +69,7 @@ function App() {
   const [tutorialOpen, setTutorialOpen] = useState(() => window.localStorage.getItem('remixer:tutorial-complete') !== '1')
   const [tutorialStep, setTutorialStep] = useState(0)
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [welcomeOpen, setWelcomeOpen] = useState(true)
   const [storage, setStorage] = useState<StorageStatus | null>(null)
   const [storageBusy, setStorageBusy] = useState(false)
   const featuredBootStarted = useRef(false)
@@ -412,7 +415,7 @@ function App() {
   return (
     <div className="app-shell">
       <header className="app-header">
-        <div className="brand"><span className="brand-mark"><AudioLines size={21} /></span><div><strong>REMIXER</strong><span>Prepare. Separate. Create.</span></div></div>
+        <div className="brand"><span className="brand-mark"><img src={GIVEN_PEACE_FAVICON} alt="" /></span><div><strong>REMIXER</strong><span>Prepare. Separate. Create.</span></div></div>
         <div className="header-actions"><button onClick={startTutorial}><GraduationCap size={14} /> Tutorial</button><button onClick={() => setHelpOpen(true)}><HelpCircle size={14} /> Help</button><button onClick={() => void openSettings()}><Settings size={14} /> Settings</button><div className="engine-pill"><span className="status-dot" /><Cpu size={14} /> {computeLabel}<span>{engine.details?.cuda.vram_gb ? `${engine.details.cuda.vram_gb} GB` : computeDetail}</span></div></div>
       </header>
 
@@ -522,6 +525,7 @@ function App() {
         </div>
       </main>
       {toast ? <div className="toast"><Clipboard size={16} /> {toast}</div> : null}
+      {welcomeOpen && !tutorialOpen ? <WelcomeSupport onContinue={() => setWelcomeOpen(false)} /> : null}
       {helpOpen ? <HelpCenter onClose={() => setHelpOpen(false)} onStartTutorial={startTutorial} /> : null}
       {tutorialOpen ? <Tutorial step={tutorialStep} ready={tutorialTrackReady} required={tutorialRequired} onStepChange={setTutorialStep} onUseTrack={useTutorialTrack} onOriginal={showTutorialOriginal} onChord={jumpTutorialChord} onVocal={previewTutorialVocal} onComplete={completeTutorial} onClose={() => setTutorialOpen(false)} /> : null}
       {settingsOpen && storage ? <StorageSettings status={storage} busy={storageBusy} activeTrackDir={track?.track_dir} onClose={() => setSettingsOpen(false)} onLimit={(limitMb) => void updateStorage({ command: 'set_storage_limit', limit_mb: limitMb })} onCleanup={() => void updateStorage({ command: 'cleanup_storage', force: true })} onOffload={(trackDir) => void updateStorage({ command: 'offload_project', track_dir: trackDir })} /> : null}
