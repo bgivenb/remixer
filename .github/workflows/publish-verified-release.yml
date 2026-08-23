@@ -1,0 +1,84 @@
+name: Publish verified release
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Existing draft release tag
+        required: true
+        type: string
+      build_run_id:
+        description: Successful native-installer workflow run
+        required: true
+        type: string
+
+permissions:
+  actions: read
+  contents: write
+
+jobs:
+  publish:
+    name: Publish draft release
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      GH_TOKEN: ${{ github.token }}
+      RELEASE_TAG: ${{ inputs.release_tag }}
+      BUILD_RUN_ID: ${{ inputs.build_run_id }}
+
+    steps:
+      - name: Check out release repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Verify tag, draft, and native build
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin --tags --force
+          tag_commit=$(git rev-parse "${RELEASE_TAG}^{commit}")
+          build_commit=$(gh run view "$BUILD_RUN_ID" --json headSha --jq .headSha)
+          build_result=$(gh run view "$BUILD_RUN_ID" --json conclusion --jq .conclusion)
+          draft_state=$(gh release view "$RELEASE_TAG" --json isDraft --jq .isDraft)
+          test "$build_result" = success
+          test "$build_commit" = "$tag_commit"
+          test "$draft_state" = true
+
+      - name: Download native build artifacts
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p release
+          gh run download "$BUILD_RUN_ID" --name remixer-macos-arm64 --dir release
+          gh run download "$BUILD_RUN_ID" --name remixer-windows-x64 --dir release
+          gh release download v0.1.1 --pattern Down-So-Bad-Tutorial-Project.zip --dir release
+
+      - name: Verify files and write combined checksums
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="${RELEASE_TAG#v}"
+          mac_dmg="Remixer-${version}-arm64.dmg"
+          mac_zip="Remixer-${version}-arm64.zip"
+          windows_exe="Remixer-Setup-${version}-x64.exe"
+          tutorial_zip="Down-So-Bad-Tutorial-Project.zip"
+          test -s "release/$mac_dmg"
+          test -s "release/$mac_zip"
+          test -s "release/$windows_exe"
+          test -s "release/$tutorial_zip"
+          cd release
+          sha256sum "$mac_dmg" "$mac_zip" "$windows_exe" "$tutorial_zip" > SHA256SUMS.txt
+          cat SHA256SUMS.txt
+
+      - name: Upload assets and publish
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="${RELEASE_TAG#v}"
+          gh release upload "$RELEASE_TAG" "release/Remixer-${version}-arm64.dmg" --clobber
+          gh release upload "$RELEASE_TAG" "release/Remixer-${version}-arm64.zip" --clobber
+          gh release upload "$RELEASE_TAG" "release/Remixer-Setup-${version}-x64.exe" --clobber
+          gh release upload "$RELEASE_TAG" release/Down-So-Bad-Tutorial-Project.zip --clobber
+          gh release upload "$RELEASE_TAG" release/SHA256SUMS.txt --clobber
+          gh release edit "$RELEASE_TAG" --draft=false --latest
