@@ -54,6 +54,10 @@ try {
   } else {
     throw new Error(`Remixer packaging is not configured for ${process.platform}.`)
   }
+  // Packaging and publishing are separate release steps. Explicitly disable
+  // electron-builder's implicit CI publishing so native builders only emit
+  // the verified local artifacts collected below.
+  builderArgs.push('--publish', 'never')
   builderArgs.push(`--config.directories.output=${temporaryOutput}`)
   await run(process.execPath, builderArgs)
   await mkdir(destination, { recursive: true })
