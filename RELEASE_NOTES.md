@@ -1,9 +1,12 @@
-# Remixer 0.1.2 — One-click setup on Windows and Mac
+# Remixer 0.1.3 — Welcome, tutorial controls, and Given Peace branding
 
 Remixer is a Given Peace–styled local producer workstation for finding authorized YouTube audio, detecting musical structure, navigating by chord, separating stems with native hardware acceleration, and moving sample-accurate WAVs into a DAW workflow.
 
 ## Highlights
 
+- A calm launch welcome thanks people for using Remixer, offers an optional Beatport link, and keeps **Continue** as the prominent action.
+- The tutorial now has an always-visible close button, so anyone can return to the workspace without falsely completing the walkthrough.
+- The exact Given Peace site favicon is now used in the Remixer header and as the packaged application icon on both platforms.
 - One-click Windows and Apple Silicon setup with no package-manager commands, administrator password, or PATH changes.
 - Bundled, checksum-verified platform-native `uv` and LGPL FFmpeg/FFprobe tools.
 - Windows privately installs Python 3.11 and CUDA PyTorch, then verifies the NVIDIA device and core model.
@@ -21,9 +24,9 @@ Remixer is a Given Peace–styled local producer workstation for finding authori
 
 ## Downloads
 
-- `Remixer-Setup-0.1.2-x64.exe` — Windows 10/11 x64 NSIS installer.
-- `Remixer-0.1.2-arm64.dmg` — standard Apple Silicon installer image.
-- `Remixer-0.1.2-arm64.zip` — portable Apple Silicon application.
+- `Remixer-Setup-0.1.3-x64.exe` — Windows 10/11 x64 NSIS installer.
+- `Remixer-0.1.3-arm64.dmg` — standard Apple Silicon installer image.
+- `Remixer-0.1.3-arm64.zip` — portable Apple Silicon application.
 - `Down-So-Bad-Tutorial-Project.zip` — reproducible owner-authorized base tutorial asset used by release builds.
 - `SHA256SUMS.txt` — checksums for all release artifacts.
 

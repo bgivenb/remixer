@@ -10,7 +10,7 @@ The macOS port is complete and the shared application now includes eight product
    `build-tools/Down-So-Bad-Tutorial-Project.zip` contains only the owner-authorized base track and thumbnail. `ensure_tutorial` expands it locally; the five-step tutorial guides the user through real detection and six-stem separation. Do not re-bundle rendered stems.
 3. Live chord highlighting in both the waveform timeline and progression row.
 4. Click-to-seek on every displayed chord, using the segment's exact start time.
-5. One-click first-run setup with no separate setup page, dependency link, package-manager command, or manual PATH configuration. Mac v0.1.2 ships verified private `uv`, FFmpeg, and FFprobe tools and installs its private Python engine/model after the user clicks **Set up Remixer**. The next Windows build must provide the same product experience with Windows-native verified tools while preserving its CUDA-specific engine path.
+5. One-click first-run setup with no separate setup page, dependency link, package-manager command, or manual PATH configuration. Remixer v0.1.3 ships verified private `uv`, FFmpeg, and FFprobe tools for each platform and installs its private Python engine/model after the user clicks **Set up Remixer**. Windows preserves its CUDA-specific engine path.
 6. A welcome modal on every normal app launch after setup/onboarding. It uses the approved Given Peace support copy, links to the canonical Beatport artist page at `https://www.beatport.com/artist/given-peace/1153686`, keeps the Beatport action secondary, and places a larger **Continue** button directly below it.
 7. The tutorial always exposes its top-right close button, including before completion. Closing returns to the app immediately without marking the tutorial complete, so an incomplete walkthrough may appear again on the next launch.
 8. Remixer uses the exact favicon declared by `givenpeace.com` as its header logo and application icon. The pinned 300×300 RGBA PNG is stored as `assets/given-peace-favicon.base64` with source SHA-256 `de165817dd3665ccb43f7afbe3400a80bd2595a97cf0be4079320333040c50b7`; `scripts/build-icon.mjs` verifies it and deterministically creates the 512×512 package icon required by Electron Builder.
@@ -77,7 +77,7 @@ Important: packaged Electron renderers load from `file://`, which omits the HTTP
 - Target: Apple Silicon (`arm64`), macOS 12+.
 - Engine: arm64 Python 3.11 under `~/Library/Application Support/Remixer/engine`.
 - Compute order: native MLX, Torch MPS, then Torch CPU.
-- The 0.1.2 Mac package bundles verified Apple Silicon `uv`, FFmpeg, FFprobe, and a tiny macOS 12 `realpath` compatibility helper. First-run setup requires one in-app click and no Homebrew, Terminal work, administrator password, or PATH changes.
+- The 0.1.3 Mac package bundles verified Apple Silicon `uv`, FFmpeg, FFprobe, and a tiny macOS 12 `realpath` compatibility helper. First-run setup requires one in-app click and no Homebrew, Terminal work, administrator password, or PATH changes.
 - Because setup is handled inside the app, the public website can remove its separate Mac setup/dependency link. Remove the equivalent Windows setup link after the Windows clean-machine validation above passes; retain only a short note that first setup is automatic and requires an internet connection and the documented disk space.
 - A native Swift pasteboard helper publishes persistent file URLs and was validated by pasting two WAV files with spaces and Unicode into Finder.
 - Real six-stem MLX/MPS smoke: all 7 files contained exactly 88,200 frames.
@@ -105,8 +105,8 @@ The local Mac package is intentionally unsigned. Public distribution still requi
 The final local artifacts are:
 
 ```text
-release/Remixer-0.1.2-arm64.dmg
-release/Remixer-0.1.2-arm64.zip
+release/Remixer-0.1.3-arm64.dmg
+release/Remixer-0.1.3-arm64.zip
 release/Down-So-Bad-Tutorial-Project.zip
 release/SHA256SUMS.txt
 ```
