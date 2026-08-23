@@ -1,0 +1,54 @@
+name: Build native installers
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    name: Package ${{ matrix.label }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+            label: Apple Silicon
+            artifact: remixer-macos-arm64
+            files: |
+              release/Remixer-0.1.3-arm64.dmg
+              release/Remixer-0.1.3-arm64.zip
+          - os: windows-latest
+            label: Windows x64
+            artifact: remixer-windows-x64
+            files: release/Remixer-Setup-0.1.3-x64.exe
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v6
+
+      - name: Use Node.js 24
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Verify shared application
+        run: npm run typecheck && npm test
+
+      - name: Build native package
+        run: npm run package
+
+      - name: Upload native installers
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ matrix.artifact }}
+          path: ${{ matrix.files }}
+          if-no-files-found: error
+          retention-days: 7

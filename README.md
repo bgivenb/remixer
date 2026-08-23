@@ -4,9 +4,9 @@ Remixer is a local Windows and macOS producer workstation for acquiring authoriz
 
 ## Download
 
-- [Download Remixer 0.1.2 for Apple Silicon (.dmg)](https://github.com/bgivenb/remixer/releases/download/v0.1.2/Remixer-0.1.2-arm64.dmg)
-- [Download the portable Mac build (.zip)](https://github.com/bgivenb/remixer/releases/download/v0.1.2/Remixer-0.1.2-arm64.zip)
-- [Download Remixer 0.1.2 for Windows (.exe)](https://github.com/bgivenb/remixer/releases/download/v0.1.2/Remixer-Setup-0.1.2-x64.exe)
+- [Download Remixer 0.1.3 for Apple Silicon (.dmg)](https://github.com/bgivenb/remixer/releases/download/v0.1.3/Remixer-0.1.3-arm64.dmg)
+- [Download the portable Mac build (.zip)](https://github.com/bgivenb/remixer/releases/download/v0.1.3/Remixer-0.1.3-arm64.zip)
+- [Download Remixer 0.1.3 for Windows (.exe)](https://github.com/bgivenb/remixer/releases/download/v0.1.3/Remixer-Setup-0.1.3-x64.exe)
 - [View all releases](https://github.com/bgivenb/remixer/releases)
 
 The current Mac build is unsigned. After the first launch attempt, macOS may require **System Settings → Privacy & Security → Open Anyway**. A normal trusted Developer ID signature and notarization requires Apple Developer Program membership; see the distribution note below.
@@ -24,9 +24,9 @@ Settings includes a project-audio budget with a 5 GB default and a 500 MB minimu
 The supported targets are Windows 10/11 on x64 with an NVIDIA CUDA GPU and Apple Silicon (`arm64`) on macOS 12 or newer. Build artifacts are written to `release/`:
 
 ```text
-release/Remixer-Setup-0.1.2-x64.exe
-release/Remixer-0.1.2-arm64.dmg
-release/Remixer-0.1.2-arm64.zip
+release/Remixer-Setup-0.1.3-x64.exe
+release/Remixer-0.1.3-arm64.dmg
+release/Remixer-0.1.3-arm64.zip
 ```
 
 The completed Windows release checklist and measured results are recorded in [WINDOWS_VALIDATION.md](WINDOWS_VALIDATION.md).
