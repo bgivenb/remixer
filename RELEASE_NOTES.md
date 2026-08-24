@@ -1,9 +1,11 @@
-# Remixer 0.1.3 — Welcome, tutorial controls, and Given Peace branding
+# Remixer 0.1.4 — macOS Gatekeeper packaging fix
 
 Remixer is a Given Peace–styled local producer workstation for finding authorized YouTube audio, detecting musical structure, navigating by chord, separating stems with native hardware acceleration, and moving sample-accurate WAVs into a DAW workflow.
 
 ## Highlights
 
+- The Apple Silicon app and every nested executable now receive a complete ad-hoc signature before the DMG and ZIP are created. This fixes macOS incorrectly reporting the intact download as damaged because the previous bundle resources were not sealed.
+- The Mac build remains unnotarized. On first launch, use **System Settings → Privacy & Security → Open Anyway** if macOS blocks it as coming from an unidentified developer.
 - A calm launch welcome thanks people for using Remixer, offers an optional Beatport link, and keeps **Continue** as the prominent action.
 - The tutorial now has an always-visible close button, so anyone can return to the workspace without falsely completing the walkthrough.
 - The exact Given Peace site favicon is now used in the Remixer header and as the packaged application icon on both platforms.
@@ -24,9 +26,9 @@ Remixer is a Given Peace–styled local producer workstation for finding authori
 
 ## Downloads
 
-- `Remixer-Setup-0.1.3-x64.exe` — Windows 10/11 x64 NSIS installer.
-- `Remixer-0.1.3-arm64.dmg` — standard Apple Silicon installer image.
-- `Remixer-0.1.3-arm64.zip` — portable Apple Silicon application.
+- `Remixer-Setup-0.1.4-x64.exe` — Windows 10/11 x64 NSIS installer.
+- `Remixer-0.1.4-arm64.dmg` — standard Apple Silicon installer image.
+- `Remixer-0.1.4-arm64.zip` — portable Apple Silicon application.
 - `Down-So-Bad-Tutorial-Project.zip` — reproducible owner-authorized base tutorial asset used by release builds.
 - `SHA256SUMS.txt` — checksums for all release artifacts.
 
@@ -42,7 +44,7 @@ The Windows installer is unsigned because no Authenticode certificate was provid
 
 Drag Remixer to Applications, open it, and select **Set up Remixer**. Remixer supplies its own verified setup/audio tools, then installs its private Python/ML engine and downloads the core six-stem model. No Homebrew or Terminal work is required. Expect roughly 1.6 GB for that setup. The optional HQ-vocal model downloads only on first use.
 
-The Mac build is unsigned because no Apple Developer ID was provided. After attempting to open it, use **System Settings → Privacy & Security → Open Anyway**. A normal trusted public release requires Apple Developer Program membership, Developer ID signing, and notarization.
+The Mac build is ad-hoc signed for integrity but is not Developer ID signed or notarized. After attempting to open it, use **System Settings → Privacy & Security → Open Anyway**. A normal trusted public release requires Apple Developer Program membership, Developer ID signing, and notarization.
 
 ## Responsible use
 

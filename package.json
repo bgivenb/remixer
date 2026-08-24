@@ -1,6 +1,6 @@
 {
   "name": "remixer",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "private": true,
   "author": "Given",
   "description": "Local producer workstation for audio analysis and AI stem separation",
@@ -89,7 +89,8 @@
         { "target": "zip", "arch": ["arm64"] }
       ],
       "artifactName": "${productName}-${version}-${arch}.${ext}",
-      "identity": null,
+      "identity": "-",
+      "hardenedRuntime": false,
       "extraResources": [
         {
           "from": "build-tools/remixer-file-clipboard",

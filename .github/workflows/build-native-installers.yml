@@ -17,12 +17,12 @@ jobs:
             label: Apple Silicon
             artifact: remixer-macos-arm64
             files: |
-              release/Remixer-0.1.3-arm64.dmg
-              release/Remixer-0.1.3-arm64.zip
+              release/Remixer-*-arm64.dmg
+              release/Remixer-*-arm64.zip
           - os: windows-latest
             label: Windows x64
             artifact: remixer-windows-x64
-            files: release/Remixer-Setup-0.1.3-x64.exe
+            files: release/Remixer-Setup-*-x64.exe
     runs-on: ${{ matrix.os }}
     timeout-minutes: 60
 
@@ -44,6 +44,17 @@ jobs:
 
       - name: Build native package
         run: npm run package
+
+      - name: Verify macOS bundle signature
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          set -euo pipefail
+          version=$(node -p "require('./package.json').version")
+          check_dir="$RUNNER_TEMP/remixer-signature-check"
+          mkdir -p "$check_dir"
+          ditto -x -k "release/Remixer-${version}-arm64.zip" "$check_dir"
+          codesign --verify --deep --strict --verbose=2 "$check_dir/Remixer.app"
 
       - name: Upload native installers
         uses: actions/upload-artifact@v7
