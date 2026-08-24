@@ -1,4 +1,4 @@
-# Remixer 0.1.4 — macOS Gatekeeper packaging fix
+# Remixer 0.1.3 — macOS Gatekeeper packaging fix
 
 Remixer is a Given Peace–styled local producer workstation for finding authorized YouTube audio, detecting musical structure, navigating by chord, separating stems with native hardware acceleration, and moving sample-accurate WAVs into a DAW workflow.
 
@@ -26,9 +26,9 @@ Remixer is a Given Peace–styled local producer workstation for finding authori
 
 ## Downloads
 
-- `Remixer-Setup-0.1.4-x64.exe` — Windows 10/11 x64 NSIS installer.
-- `Remixer-0.1.4-arm64.dmg` — standard Apple Silicon installer image.
-- `Remixer-0.1.4-arm64.zip` — portable Apple Silicon application.
+- `Remixer-Setup-0.1.3-x64.exe` — Windows 10/11 x64 NSIS installer.
+- `Remixer-0.1.3-arm64.dmg` — standard Apple Silicon installer image.
+- `Remixer-0.1.3-arm64.zip` — portable Apple Silicon application.
 - `Down-So-Bad-Tutorial-Project.zip` — reproducible owner-authorized base tutorial asset used by release builds.
 - `SHA256SUMS.txt` — checksums for all release artifacts.
 
