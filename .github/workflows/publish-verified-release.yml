@@ -11,6 +11,14 @@ on:
         description: Successful native-installer workflow run
         required: true
         type: string
+      expected_release_state:
+        description: Expected state before verified assets are uploaded
+        required: true
+        default: draft
+        type: choice
+        options:
+          - draft
+          - published
 
 permissions:
   actions: read
@@ -25,6 +33,7 @@ jobs:
       GH_TOKEN: ${{ github.token }}
       RELEASE_TAG: ${{ inputs.release_tag }}
       BUILD_RUN_ID: ${{ inputs.build_run_id }}
+      EXPECTED_RELEASE_STATE: ${{ inputs.expected_release_state }}
 
     steps:
       - name: Check out release repository
@@ -43,7 +52,11 @@ jobs:
           draft_state=$(gh release view "$RELEASE_TAG" --json isDraft --jq .isDraft)
           test "$build_result" = success
           test "$build_commit" = "$tag_commit"
-          test "$draft_state" = true
+          if [ "$EXPECTED_RELEASE_STATE" = draft ]; then
+            test "$draft_state" = true
+          else
+            test "$draft_state" = false
+          fi
 
       - name: Download native build artifacts
         shell: bash
@@ -81,4 +94,7 @@ jobs:
           gh release upload "$RELEASE_TAG" "release/Remixer-Setup-${version}-x64.exe" --clobber
           gh release upload "$RELEASE_TAG" release/Down-So-Bad-Tutorial-Project.zip --clobber
           gh release upload "$RELEASE_TAG" release/SHA256SUMS.txt --clobber
-          gh release edit "$RELEASE_TAG" --draft=false --latest
+          gh release edit "$RELEASE_TAG" --title "Remixer ${RELEASE_TAG}" --notes-file RELEASE_NOTES.md
+          if [ "$EXPECTED_RELEASE_STATE" = draft ]; then
+            gh release edit "$RELEASE_TAG" --draft=false --latest
+          fi
