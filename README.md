@@ -179,4 +179,4 @@ Download only audio you own, material in the public domain or under an appropria
 
 ## License
 
-No project-wide license has been granted. Unless a file or bundled third-party component states otherwise, the Remixer source is publicly viewable but may not be reused or redistributed. See [Third-party notices](THIRD_PARTY_NOTICES.md) for the licenses and provenance of integrated components.
+Remixer's original source code is licensed under the [MIT License](LICENSE). Third-party components, model weights, and audio assets retain their respective licenses; the MIT grant does not relicense them. See [Third-party notices](THIRD_PARTY_NOTICES.md) for component licenses and provenance.
