@@ -1,6 +1,18 @@
 # Remixer
 
-Remixer is a local Windows and macOS producer workstation for acquiring authorized audio, selecting and previewing waveform regions, detecting musical structure, separating stems with the computer's native accelerator, and copying Ableton-ready WAV files through the operating system's file clipboard.
+Turn an authorized track into usable musical material without sending it to a hosted service. Remixer is a free, local Windows and macOS producer workstation for waveform selection, BPM/key/chord analysis, machine-learning stem separation, and DAW-ready WAV export.
+
+![Remixer showing waveform selection, BPM, key, chord analysis, and the current track](docs/images/remixer-analysis.png)
+
+*Screenshot by Given Peace. Read the product story in [Love of House](https://loveofhouse.org/articles/given-peace-remixer-producer-workstation) or visit the [Remixer product page](https://www.givenpeace.com/audio-tools).*
+
+## One local workflow
+
+- Find or import audio you are authorized to use.
+- Draw and audition a sample-accurate waveform selection.
+- Inspect BPM, key, and a beat-synchronized chord timeline.
+- Separate six stems or run a focused high-quality vocal model on local hardware.
+- Copy a full stem or exact selection directly into Finder, Explorer, or a compatible DAW.
 
 ## Download
 
@@ -9,9 +21,22 @@ Remixer is a local Windows and macOS producer workstation for acquiring authoriz
 - [Download Remixer 0.1.3 for Windows (.exe)](https://github.com/bgivenb/remixer/releases/download/v0.1.3/Remixer-Setup-0.1.3-x64.exe)
 - [View all releases](https://github.com/bgivenb/remixer/releases)
 
-The current Mac build is ad-hoc signed for bundle integrity but is not Developer ID signed or notarized. After the first launch attempt, macOS may require **System Settings → Privacy & Security → Open Anyway**. A normal trusted Developer ID signature and notarization requires Apple Developer Program membership; see the distribution note below.
+Release assets include SHA-256 checksums. Supported targets are Windows 10/11 x64 with an NVIDIA CUDA GPU and Apple Silicon on macOS 12 or newer.
 
-The current Windows installer is also unsigned because no Authenticode certificate was provided. Microsoft Defender SmartScreen may show an unrecognized-app warning; a public trusted Windows release requires an appropriate code-signing certificate.
+## Architecture
+
+![Remixer architecture: Electron and React connect through typed IPC to a local Python worker and platform-native audio engines; verified inputs flow through packaging to GitHub Releases](docs/images/architecture.svg)
+
+The Electron renderer stays context-isolated from Node.js. A typed IPC boundary coordinates the persistent local worker, byte-range audio streaming, progress events, project storage, and a small native file-clipboard helper. Platform packaging builds the UI and private runtime separately so model and Python dependencies do not make every interface update enormous.
+
+## Validation snapshot
+
+- `npm ci`, TypeScript checks, 9 renderer/unit tests, and the production build pass from a clean clone.
+- Three versioned releases provide Windows and Apple Silicon assets with checksum files.
+- Runtime downloads and the reviewed BS-RoFormer source are pinned and checksum verified during packaging.
+- The current installers are unsigned; the exact trust and notarization limitations are documented below.
+
+## Product details
 
 The entire interface follows the stark editorial visual system of [givenpeace.com](https://www.givenpeace.com/): black and white surfaces, condensed display type, sharp borders, and minimal decoration. The built-in YouTube browser opens on Given Peace's **Down So Bad** official video, lets listeners search YouTube without leaving Remixer, and can send the selected video directly into the existing audio-import workflow. Down So Bad is also the permanent pinned default track: the app installs its bundled base audio on a clean launch, opens it at startup, and never lets ordinary recent-history ordering displace it.
 
@@ -28,6 +53,12 @@ release/Remixer-Setup-0.1.3-x64.exe
 release/Remixer-0.1.3-arm64.dmg
 release/Remixer-0.1.3-arm64.zip
 ```
+
+### Current signing status
+
+The current Mac build is ad-hoc signed for bundle integrity but is not Developer ID signed or notarized. After the first launch attempt, macOS may require **System Settings → Privacy & Security → Open Anyway**. A normal trusted Developer ID signature and notarization requires Apple Developer Program membership.
+
+The current Windows installer is unsigned because no Authenticode certificate was provided. Microsoft Defender SmartScreen may show an unrecognized-app warning; a publicly trusted Windows release requires an appropriate code-signing certificate.
 
 The completed Windows release checklist and measured results are recorded in [WINDOWS_VALIDATION.md](WINDOWS_VALIDATION.md).
 
@@ -145,3 +176,7 @@ npm run package
 ## Responsible use
 
 Download only audio you own, material in the public domain or under an appropriate license, or content you otherwise have permission to download. Remixer does not bypass DRM, authentication, geographic restrictions, or access controls. Model licenses and provenance should be reviewed before redistribution or commercial use.
+
+## License
+
+No project-wide license has been granted. Unless a file or bundled third-party component states otherwise, the Remixer source is publicly viewable but may not be reused or redistributed. See [Third-party notices](THIRD_PARTY_NOTICES.md) for the licenses and provenance of integrated components.

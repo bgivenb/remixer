@@ -23,24 +23,24 @@
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.electron.json --noEmit"
   },
   "dependencies": {
-    "@vitejs/plugin-react": "latest",
-    "lucide-react": "latest",
-    "react": "latest",
-    "react-dom": "latest",
-    "wavesurfer.js": "latest"
+    "@vitejs/plugin-react": "6.1.0",
+    "lucide-react": "1.33.0",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "wavesurfer.js": "7.12.11"
   },
   "devDependencies": {
-    "@types/node": "latest",
-    "@types/react": "latest",
-    "@types/react-dom": "latest",
-    "concurrently": "latest",
-    "cross-env": "latest",
-    "electron": "latest",
-    "electron-builder": "latest",
-    "typescript": "latest",
-    "vite": "latest",
-    "vitest": "latest",
-    "wait-on": "latest"
+    "@types/node": "26.2.0",
+    "@types/react": "19.2.18",
+    "@types/react-dom": "19.2.4",
+    "concurrently": "10.0.5",
+    "cross-env": "10.1.0",
+    "electron": "43.4.1",
+    "electron-builder": "26.15.3",
+    "typescript": "7.0.2",
+    "vite": "8.2.2",
+    "vitest": "4.1.11",
+    "wait-on": "9.1.0"
   },
   "build": {
     "appId": "ai.lumae.remixer",

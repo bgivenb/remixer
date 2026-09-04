@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="520" viewBox="0 0 1200 520" role="img" aria-labelledby="title desc">
+  <title id="title">Remixer desktop architecture</title>
+  <desc id="desc">Electron and React provide the desktop interface, a typed IPC boundary connects to a local Python audio worker, and packaging workflows assemble platform-specific runtimes and verified releases.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#111827"/>
+    </marker>
+    <style>
+      .label { font: 700 21px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #111827; }
+      .small { font: 15px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #4b5563; }
+      .tiny { font: 700 13px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #374151; letter-spacing: 1.1px; }
+      .box { fill: #ffffff; stroke: #111827; stroke-width: 2; rx: 10; }
+      .soft { fill: #f3f4f6; stroke: #6b7280; stroke-width: 2; rx: 10; }
+      .arrow { stroke: #111827; stroke-width: 3; fill: none; marker-end: url(#arrow); }
+    </style>
+  </defs>
+  <rect width="1200" height="520" rx="20" fill="#fafafa"/>
+  <text x="42" y="48" class="tiny">LOCAL DESKTOP RUNTIME</text>
+  <rect x="42" y="72" width="250" height="150" class="box"/>
+  <text x="68" y="113" class="label">Electron + React</text>
+  <text x="68" y="147" class="small">Waveform and selection UI</text>
+  <text x="68" y="176" class="small">Chord and stem workflow</text>
+  <text x="68" y="205" class="small">Context-isolated renderer</text>
+
+  <path d="M292 147 H362" class="arrow"/>
+  <rect x="362" y="72" width="250" height="150" class="soft"/>
+  <text x="388" y="113" class="label">Typed IPC</text>
+  <text x="388" y="147" class="small">Commands and progress events</text>
+  <text x="388" y="176" class="small">Byte-range audio streaming</text>
+  <text x="388" y="205" class="small">Native clipboard helper</text>
+
+  <path d="M612 147 H682" class="arrow"/>
+  <rect x="682" y="72" width="250" height="150" class="box"/>
+  <text x="708" y="113" class="label">Local audio worker</text>
+  <text x="708" y="147" class="small">Python 3.11 process</text>
+  <text x="708" y="176" class="small">Analysis + project storage</text>
+  <text x="708" y="205" class="small">Private model execution</text>
+
+  <path d="M932 147 H1002" class="arrow"/>
+  <rect x="1002" y="72" width="156" height="150" class="soft"/>
+  <text x="1026" y="113" class="label">Engines</text>
+  <text x="1026" y="147" class="small">MLX / MPS</text>
+  <text x="1026" y="176" class="small">CUDA / CPU</text>
+  <text x="1026" y="205" class="small">FFmpeg</text>
+
+  <text x="42" y="294" class="tiny">BUILD AND RELEASE</text>
+  <rect x="42" y="318" width="250" height="142" class="box"/>
+  <text x="68" y="359" class="label">Pinned inputs</text>
+  <text x="68" y="393" class="small">Runtime archives + checksums</text>
+  <text x="68" y="422" class="small">Reviewed model source</text>
+  <text x="68" y="451" class="small">Tutorial provenance</text>
+  <path d="M292 389 H430" class="arrow"/>
+  <rect x="430" y="318" width="300" height="142" class="soft"/>
+  <text x="456" y="359" class="label">Platform packaging</text>
+  <text x="456" y="393" class="small">NSIS on Windows</text>
+  <text x="456" y="422" class="small">DMG + ZIP on Apple Silicon</text>
+  <text x="456" y="451" class="small">Manifest verification</text>
+  <path d="M730 389 H868" class="arrow"/>
+  <rect x="868" y="318" width="290" height="142" class="box"/>
+  <text x="894" y="359" class="label">GitHub Releases</text>
+  <text x="894" y="393" class="small">Versioned installers</text>
+  <text x="894" y="422" class="small">SHA-256 checksums</text>
+  <text x="894" y="451" class="small">Recorded validation</text>
+</svg>
